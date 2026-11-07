@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#254c46">
+  <title>ביחד בבית · התחברות</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/login.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login-layout">
+    <section class="login-panel" aria-labelledby="loginTitle">
+      <a class="brand" href="/login.html"><img src="/assets/favicon.svg" width="43" height="43" alt=""><span>ביחד בבית<small>הדברים הקטנים, של כולנו</small></span></a>
+      <div class="login-content">
+        <span class="eyebrow">נעים לחזור</span>
+        <h1 id="loginTitle">ברוכים הבאים<br>הביתה.</h1>
+        <p class="muted login-intro">המשימות, הקניות וכל מה שצריך לזכור —<br>במקום אחד, לכל המשפחה.</p>
+        <p id="loginMessage" class="notice" role="alert" hidden></p>
+        <form id="loginForm" method="post" action="/login">
+          <input id="csrfInput" type="hidden">
+          <label for="username">שם משתמש</label>
+          <input id="username" name="username" type="text" autocomplete="username" dir="auto" placeholder="שם המשתמש שלך" required autofocus>
+          <label for="password">סיסמה</label>
+          <div class="password-field"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="הסיסמה שלך" required><button id="togglePassword" class="icon-button" type="button" aria-label="הצגת הסיסמה" aria-pressed="false"><svg class="icon"><use href="/assets/icons.svg#eye"></use></svg></button></div>
+          <button id="loginSubmit" class="button button-primary login-submit" type="submit" disabled><span>כניסה לבית שלנו</span><svg class="icon"><use href="/assets/icons.svg#arrow"></use></svg></button>
+          <button id="retryLogin" class="text-button" type="button" hidden>ניסיון נוסף לחיבור</button>
+        </form>
+        <p class="login-help">אין לך חשבון עדיין? מנהל המשפחה יכול ליצור לך אחד.</p>
+      </div>
+      <span class="login-footer">פחות לזכור לבד. יותר לעשות ביחד.</span>
+    </section>
+    <aside class="login-story" aria-label="על המערכת">
+      <div class="story-decoration" aria-hidden="true"><span class="orbit orbit-one"></span><span class="orbit orbit-two"></span><svg class="story-spark"><use href="/assets/icons.svg#spark"></use></svg></div>
+      <span class="story-tag">מקום קטן לסדר של הבית</span>
+      <h2>לכל אחד יש חלק.<br>ביחד, הבית עובד.</h2>
+      <p>רואים מה צריך לעשות, יודעים מי אחראי<br>וזוכרים מה חסר במקרר.</p>
+      <div class="illustration-board" aria-hidden="true">
+        <div class="illustration-heading"><span class="mini-house"><svg class="icon"><use href="/assets/icons.svg#home"></use></svg></span><strong>הבית שלנו</strong><span class="illustration-dots">···</span></div>
+        <div class="illustration-row"><span class="illustration-check checked">✓</span><span>משימות הבית</span><span class="illustration-pill">ביחד</span></div>
+        <div class="illustration-row"><span class="illustration-check"></span><span>רשימת הקניות</span><span class="illustration-pill peach">לכולנו</span></div>
+        <div class="illustration-row"><span class="illustration-check"></span><span>כל הדברים הקטנים</span><span class="illustration-avatar">♥</span></div>
+      </div>
+      <div class="story-bottom"><span class="story-line"></span><span>משפחה אחת. לוח משותף.</span></div>
+    </aside>
+  </main>
+</body>
+</html>

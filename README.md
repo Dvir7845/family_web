@@ -2,7 +2,7 @@
 
 A Spring Boot backend for a shared family task board. Family members can see who is responsible for each task and whether it has been completed. Administrators manage tasks and member accounts; only the assigned member can mark a task as completed.
 
-This is a learning and portfolio project. The current version supports one family and provides an API; a user interface and hosted deployment are planned.
+This is a learning and portfolio project for one family. A responsive Hebrew, right-to-left browser interface is served by the same Spring Boot application as the API. Hosted deployment is planned.
 
 ## Stack
 
@@ -12,6 +12,7 @@ This is a learning and portfolio project. The current version supports one famil
 - JUnit, Mockito, Spring Security Test and MockMvc
 - H2 for isolated automated tests
 - Maven Wrapper
+- HTML, CSS and browser JavaScript; no frontend installation or build step
 
 ## Permissions
 
@@ -47,13 +48,23 @@ Prerequisites: JDK 25, PostgreSQL, and PowerShell. Maven does not need to be ins
 
    Enter the **PostgreSQL password** when prompted. It is separate from the application login password. The script supplies `DB_PASSWORD` only while the server runs and does not save it to a file. The execution-policy option applies to this child process only.
 
-5. Open `http://localhost:8080/tasks` and sign in. Use Ctrl+C to stop the server.
+5. Open `http://localhost:8080/` and sign in. Use Ctrl+C to stop the server.
+
+## Browser interface
+
+- Shared task board, search, day/status filters, assignment and completion.
+- Administrators can add, edit and delete tasks and create family member accounts.
+- Shared shopping list: all signed-in members can add, edit and remove products. Last-update times are displayed in the Asia/Jerusalem timezone.
+- The browser supplies CSRF tokens automatically for login, logout and changes. Passwords and tokens are not saved in browser storage.
+- Data is loaded from the real API. Use the refresh button to see changes made by other family members.
+
+The interface lives in `src/main/resources/static`. `WebSecurityConfig` defines the custom login page and keeps business endpoints protected; `CsrfController` supplies session-bound tokens. Existing JSON endpoints and HTTP Basic clients remain supported.
 
 The database must remain available while the application runs. Development schema management currently uses `spring.jpa.hibernate.ddl-auto=update`.
 
 ## API overview
 
-All endpoints require authentication. Browser form login and HTTP Basic are available through Spring Security's default configuration. State-changing requests also require a valid CSRF token; the MockMvc tests show authenticated requests with CSRF protection.
+All business endpoints require authentication. The login page, frontend assets and `/csrf` are public. Browser form login and HTTP Basic are supported. State-changing requests require a valid CSRF token; the browser interface handles this automatically, and the MockMvc tests demonstrate API usage.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -66,6 +77,13 @@ All endpoints require authentication. Browser form login and HTTP Basic are avai
 | DELETE | `/tasks/{id}` | Delete a task; administrators only |
 | PATCH | `/tasks/{id}/complete` | Complete a task assigned to the current user |
 | POST | `/members` | Create a member account; administrators only |
+| GET | `/shopping-items` | Shared shopping list |
+| GET | `/shopping-items/{id}` | Shopping item details |
+| POST | `/shopping-items` | Add a product; any family member |
+| PUT | `/shopping-items/{id}` | Edit product/quantity and refresh its update time |
+| DELETE | `/shopping-items/{id}` | Remove a product; any family member |
+
+Shopping items store a server-generated `updatedAt`. Items not updated for at least seven days are removed on startup and then every 24 hours. Viewing the list does not refresh the date.
 
 Example task request (use a real member ID):
 
@@ -88,7 +106,7 @@ The internal field `owner` currently represents the member assigned to perform a
 
 The test suite uses mocked repositories or isolated H2 databases. It does not require a running PostgreSQL server or real database credentials. Fixed passwords in test sources are disposable test fixtures only.
 
-Coverage includes role restrictions, assignment, shared visibility, completion permissions, BCrypt password storage, authentication, and response fields.
+Coverage includes role restrictions, assignment, shared visibility, completion permissions, BCrypt password storage, authentication, response fields, shopping expiry, and browser login/CSRF/logout behavior.
 
 ## Build an executable JAR
 
@@ -119,7 +137,7 @@ com.example.rest_service
 
 ## Before hosted deployment
 
-- Provide a user interface and account/password management flows.
+- Add password change/reset flows.
 - Configure HTTPS, hosted PostgreSQL, backups, and secret management.
 - Replace development schema updates with managed database migrations.
 - Keep the current single-family scope explicit; multiple families would require membership and data isolation.
