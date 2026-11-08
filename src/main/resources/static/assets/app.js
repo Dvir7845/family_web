@@ -2,15 +2,33 @@
 
 const $ = selector => document.querySelector(selector);
 const state = {
-  view: location.hash === "#shopping" ? "shopping" : "tasks",
-  user: null, tasks: [], shopping: [], assignees: [], filter: "all",
-  loaded: false, loading: false, pendingDelete: null
+  view: ["tasks", "shopping", "events"].includes(location.hash.slice(1))
+    ? location.hash.slice(1)
+    : "tasks",
+  user: null,
+  tasks: [],
+  shopping: [],
+  events: [],
+  assignees: [],
+  filter: "all",
+  loaded: false,
+  loading: false,
+  pendingDelete: null
 };
 const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 const dayValues = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const dateFormatter = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem", dateStyle: "short", timeStyle: "short"
 });
+const hebrewDateFormatter = new Intl.DateTimeFormat(
+  "he-IL-u-ca-hebrew",
+  {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  }
+);
 let toastTimer;
 
 function icon(name) {
@@ -154,14 +172,17 @@ async function loadData(initial = false) {
   }
   try {
     const user = await api("/me");
-    const [tasks, shopping, assignees] = await Promise.all([
-      api("/tasks"), api("/shopping-items"),
-      user.role === "ADMIN" ? api("/tasks/assignees") : Promise.resolve([])
+    const [tasks, shopping, assignees, events] = await Promise.all([
+      api("/tasks"),
+      api("/shopping-items"),
+      api("/members"),
+      api("/events")
     ]);
     state.user = user;
     state.tasks = tasks;
     state.shopping = shopping;
     state.assignees = assignees;
+    state.events = events;
     state.loaded = true;
     $("#currentUsername").textContent = user.username;
     $("#currentRole").textContent = isAdmin() ? "מנהל המשימות" : "בן / בת משפחה";
@@ -170,6 +191,7 @@ async function loadData(initial = false) {
     $("#navTaskCount").textContent = tasks.filter(task => !task.completed).length;
     $("#navTaskCount").title = "משימות פתוחות";
     $("#navShoppingCount").textContent = shopping.length;
+    $("#navEventCount").textContent = events.length;
     $("#lastSynced").textContent = `רוענן ב־${new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit" }).format(new Date())}`;
     render();
   } catch (error) {
@@ -194,40 +216,117 @@ function setView(view) {
 
 function render() {
   const shopping = state.view === "shopping";
-  document.title = `${shopping ? "רשימת קניות" : "משימות הבית"} · ביחד בבית`;
+  const events = state.view === "events";
+  const tasks = state.view === "tasks";
+
+  const title = events
+    ? "אירועים משפחתיים"
+    : shopping ? "רשימת הקניות" : "משימות הבית";
+
+  const actionLabel = events
+    ? "הוספת אירוע"
+    : shopping ? "הוספת מוצר" : "הוספת משימה";
+
+  document.title = `${title} · ביחד בבית`;
+
   document.querySelectorAll("[data-view]").forEach(button => {
     const active = button.dataset.view === state.view;
     button.classList.toggle("active", active);
-    if (active) button.setAttribute("aria-current", "page");
-    else button.removeAttribute("aria-current");
+
+    if (active) {
+      button.setAttribute("aria-current", "page");
+    } else {
+      button.removeAttribute("aria-current");
+    }
   });
-  $("#pageEyebrow").textContent = shopping ? "נזכרים ביחד, קונים בנחת" : "קצת סדר, הרבה ביחד";
-  $("#pageTitle").textContent = shopping ? "רשימת הקניות" : "משימות הבית";
-  $("#pageDescription").textContent = shopping
-    ? "מה חסר בבית? מוסיפים כאן, וכל המשפחה רואה."
-    : "כל המשימות במקום אחד. כל אחד יודע מה החלק שלו.";
-  $("#boardTitle").textContent = shopping ? "מה צריך לקנות?" : "מה עושים השבוע?";
-  $("#primaryAction").hidden = !state.loaded || (!shopping && !isAdmin());
-  $("#primaryAction span").textContent = shopping ? "הוספת מוצר" : "הוספת משימה";
-  $("#taskFilters").hidden = shopping;
-  $("#dayFilter").hidden = shopping;
-  $("#searchInput").placeholder = shopping ? "חיפוש מוצר ברשימה…" : "חיפוש משימה או אחראי…";
-  $("#boardNote").innerHTML = shopping
-    ? `${icon("clock")}<span>מוצרים שלא עודכנו שבוע מוסרים בניקוי היומי. כולם יכולים להוסיף ולעדכן.</span>`
-    : `${icon("users")}<span>כולם רואים את הלוח. האחראי למשימה מסמן ביצוע.</span>`;
+
+  $("#pageEyebrow").textContent = events
+    ? "נפגשים, חוגגים, זוכרים ביחד"
+    : shopping ? "נזכרים ביחד, קונים בנחת" : "קצת סדר, הרבה ביחד";
+
+  $("#pageTitle").textContent = title;
+
+  $("#pageDescription").textContent = events
+    ? "כל האירועים המשפחתיים במקום אחד."
+    : shopping
+      ? "מה חסר בבית? מוסיפים כאן, וכל המשפחה רואה."
+      : "כל המשימות במקום אחד. כל אחד יודע מה החלק שלו.";
+
+  $("#boardTitle").textContent = events
+    ? "מה קורה במשפחה?"
+    : shopping ? "מה צריך לקנות?" : "מה עושים השבוע?";
+
+  $("#primaryAction").hidden =
+    !state.loaded || (tasks && !isAdmin());
+
+  $("#primaryAction span").textContent = actionLabel;
+
+  $("#taskFilters").hidden = !tasks;
+  $("#dayFilter").hidden = !tasks;
+
+  $("#searchInput").placeholder = events
+    ? "חיפוש אירוע…"
+    : shopping ? "חיפוש מוצר ברשימה…" : "חיפוש משימה או אחראי…";
+
+  $("#boardNote").innerHTML = events
+    ? `${icon("users")}<span>כולם יכולים להוסיף ולעדכן אירועים. אירועים שעברו לפני יותר מ־30 יום מוסרים בניקוי היומי.</span>`
+    : shopping
+      ? `${icon("clock")}<span>מוצרים שלא עודכנו שבוע מוסרים בניקוי היומי. כולם יכולים להוסיף ולעדכן.</span>`
+      : `${icon("users")}<span>כולם רואים את הלוח. האחראי למשימה מסמן ביצוע.</span>`;
+
   document.querySelectorAll("[data-filter]").forEach(button => {
     const selected = button.dataset.filter === state.filter;
     button.classList.toggle("selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
+
   if (!state.loaded) return;
+
   renderStats();
-  if (shopping) renderShopping(); else renderTasks();
+
+  if (events) {
+    renderEvents();
+  } else if (shopping) {
+    renderShopping();
+  } else {
+    renderTasks();
+  }
 }
 
 function renderStats() {
   let values;
-  if (state.view === "shopping") {
+
+  if (state.view === "events") {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Jerusalem",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(new Date());
+
+    const dateParts = Object.fromEntries(
+      parts.map(part => [part.type, part.value])
+    );
+
+    const today =
+      `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+
+    values = [
+      ["אירועים בלוח", state.events.length, "clock"],
+      [
+        "מהיום והלאה",
+        state.events.filter(event => event.eventDate >= today).length,
+        "tasks"
+      ],
+      [
+        "אירועים שהוזמנתי אליהם",
+        state.events.filter(event =>
+          event.invitedUserIds.includes(state.user.id)
+        ).length,
+        "users"
+      ]
+    ];
+  } else if (state.view === "shopping") {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" });
     const day = today.format(new Date());
     values = [
@@ -345,25 +444,216 @@ function renderShopping() {
   showTableOrEmpty(items.length, Boolean(query));
 }
 
+function toHebrewNumber(number) {
+  const letters = [
+    [400, "ת"], [300, "ש"], [200, "ר"], [100, "ק"],
+    [90, "צ"], [80, "פ"], [70, "ע"], [60, "ס"],
+    [50, "נ"], [40, "מ"], [30, "ל"], [20, "כ"],
+    [10, "י"], [9, "ט"], [8, "ח"], [7, "ז"],
+    [6, "ו"], [5, "ה"], [4, "ד"], [3, "ג"],
+    [2, "ב"], [1, "א"]
+  ];
+
+  let result = "";
+
+  for (const [value, letter] of letters) {
+    if (number === 15 || number === 16) {
+      result += number === 15 ? "טו" : "טז";
+      break;
+    }
+
+    while (number >= value) {
+      result += letter;
+      number -= value;
+    }
+  }
+
+  if (result.length === 1) {
+    return result + "׳";
+  }
+
+  return result.slice(0, -1) + "״" + result.slice(-1);
+}
+
+function formatHebrewDate(date) {
+  const parts = Object.fromEntries(
+    hebrewDateFormatter.formatToParts(date)
+      .map(part => [part.type, part.value])
+  );
+
+  const year = Number(parts.year);
+  const thousands = Math.floor(year / 1000);
+  const remainder = year % 1000;
+
+  const hebrewDay = toHebrewNumber(Number(parts.day));
+  const hebrewYear =
+    toHebrewNumber(thousands) +
+    (remainder ? toHebrewNumber(remainder) : "");
+
+  return `${hebrewDay} ב${parts.month} ${hebrewYear}`;
+}
+
+function renderEvents() {
+  const query = $("#searchInput").value.trim().toLowerCase();
+
+  const events = state.events
+    .filter(event => event.description.toLowerCase().includes(query))
+    .sort((a, b) =>
+      a.eventDate.localeCompare(b.eventDate) || a.id - b.id
+    );
+
+  $("#tableHead").innerHTML = `
+    <tr>
+      <th scope="col">האירוע</th>
+      <th scope="col">תאריך</th>
+      <th scope="col">מוזמנים</th>
+      <th scope="col">
+        <span class="sr-only">פעולות</span>
+      </th>
+    </tr>
+  `;
+
+  const body = $("#tableBody");
+  body.replaceChildren();
+
+  events.forEach(event => {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td class="item-main"></td>
+      <td data-label="תאריך"></td>
+      <td data-label="מוזמנים"></td>
+      <td class="item-actions">
+        <div class="row-actions"></div>
+      </td>
+    `;
+
+    row.children[0].append(
+      textElement("span", "item-title", event.description)
+    );
+
+    const [year, month, day] = event.eventDate.split("-");
+
+    const date = new Date(
+      Date.UTC(Number(year), Number(month) - 1, Number(day))
+    );
+
+    const hebrewDate = formatHebrewDate(date);
+
+    row.children[1].append(
+      textElement("time", "", `${day}/${month}/${year}`),
+      textElement("span", "item-description", hebrewDate)
+    );
+
+    const names = event.invitedUserIds.map(userId => {
+      const member = state.assignees.find(
+        member => member.id === userId
+      );
+
+      return member ? member.username : `משתמש ${userId}`;
+    });
+
+    row.children[2].append(
+      textElement("span", "", names.join(", ") || "אין מוזמנים")
+    );
+
+    const actions = row.querySelector(".row-actions");
+
+    actions.append(
+      actionButton(
+        "edit",
+        `עריכת האירוע ${event.description}`,
+        () => openEvent(event)
+      )
+    );
+
+    actions.append(
+      actionButton(
+        "trash",
+        `מחיקת האירוע ${event.description}`,
+        () => confirmDelete(
+          "למחוק את האירוע?",
+          `האירוע ״${event.description}״ יוסר מהלוח המשפחתי.`,
+          async () => {
+            await api(`/events/${event.id}`, "DELETE");
+            notify("האירוע נמחק.");
+          }
+        ),
+        true
+      )
+    );
+
+    body.append(row);
+  });
+
+  $("#boardCount").textContent =
+    `${events.length} אירועים מוצגים · ${state.events.length} בסך הכול`;
+
+  showTableOrEmpty(events.length, Boolean(query));
+}
+
 function showTableOrEmpty(count, filtered) {
   $("#tableContainer").hidden = count === 0;
   $("#emptyState").hidden = count > 0;
+
   const shopping = state.view === "shopping";
-  $("#emptyIcon").setAttribute("href", `/assets/icons.svg#${shopping ? "shopping" : "tasks"}`);
-  $("#emptyTitle").textContent = filtered ? "לא נמצאו תוצאות מתאימות" : shopping ? "יש מקום למה שחסר" : "מתחילים בלוח נקי";
+  const events = state.view === "events";
+  const canCreate = shopping || events || isAdmin();
+
+  const glyph = events ? "clock" : shopping ? "shopping" : "tasks";
+
+  $("#emptyIcon").setAttribute(
+    "href",
+    `/assets/icons.svg#${glyph}`
+  );
+
+  $("#emptyTitle").textContent = filtered
+    ? "לא נמצאו תוצאות מתאימות"
+    : events
+      ? "עוד אין אירועים בלוח"
+      : shopping
+        ? "יש מקום למה שחסר"
+        : "מתחילים בלוח נקי";
+
   $("#emptyDescription").textContent = filtered
-    ? "נסו חיפוש אחר, או נקו את הסינון כדי לראות את הרשימה המלאה."
-    : shopping ? "חסר משהו בבית? הוסיפו אותו כאן, כדי שכולם יזכרו בקנייה הבאה."
-    : isAdmin() ? "הוסיפו משימה ראשונה ובחרו מי מבני המשפחה אחראי עליה." : "כשהמנהל יוסיף משימות, הן יופיעו כאן לכל המשפחה.";
+    ? "נסו חיפוש אחר, או נקו את הסינון."
+    : events
+      ? "מתכננים מפגש? הוסיפו אירוע ובחרו את המוזמנים."
+      : shopping
+        ? "חסר משהו בבית? הוסיפו אותו לרשימה."
+        : isAdmin()
+          ? "הוסיפו משימה ובחרו מי אחראי עליה."
+          : "כשהמנהל יוסיף משימות, הן יופיעו כאן.";
+
   const button = $("#emptyAction");
-  button.hidden = !filtered && !shopping && !isAdmin();
-  button.textContent = filtered ? "ניקוי הסינון" : shopping ? "הוספת מוצר ראשון" : "הוספת משימה ראשונה";
-  button.onclick = filtered ? () => {
-    state.filter = "all";
-    $("#searchInput").value = "";
-    $("#dayFilter").value = "all";
-    render();
-  } : () => shopping ? openShopping() : openTask();
+
+  button.hidden = !filtered && !canCreate;
+
+  button.textContent = filtered
+    ? "ניקוי הסינון"
+    : events
+      ? "הוספת אירוע ראשון"
+      : shopping
+        ? "הוספת מוצר ראשון"
+        : "הוספת משימה ראשונה";
+
+  button.onclick = () => {
+    if (filtered) {
+      state.filter = "all";
+      $("#searchInput").value = "";
+      $("#dayFilter").value = "all";
+      render();
+      return;
+    }
+
+    if (events) {
+      openEvent();
+    } else if (shopping) {
+      openShopping();
+    } else {
+      openTask();
+    }
+  };
 }
 
 function resetForm(form) {
@@ -407,6 +697,43 @@ function openShopping(item) {
   $("#productQuantity").value = item?.quantity || 1;
   $("#shoppingDialog").showModal();
   $("#productName").focus();
+}
+
+function openEvent(event) {
+  const form = $("#eventForm");
+  resetForm(form);
+
+  form.elements.namedItem("id").value = event?.id || "";
+  $("#eventDialogTitle").textContent =
+    event ? "עריכת אירוע" : "אירוע חדש";
+
+  $("#eventDescription").value = event?.description || "";
+  $("#eventDate").value = event?.eventDate || "";
+
+  const invitees = $("#eventInvitees");
+  invitees.replaceChildren();
+
+  state.assignees.forEach(member => {
+    const label = document.createElement("label");
+    label.className = "invitee-option";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "invitedUserIds";
+    checkbox.value = member.id;
+    checkbox.checked =
+      event?.invitedUserIds.includes(member.id) || false;
+
+    label.append(
+      checkbox,
+      textElement("span", "", member.username)
+    );
+
+    invitees.append(label);
+  });
+
+  $("#eventDialog").showModal();
+  $("#eventDescription").focus();
 }
 
 function renderMembers() {
@@ -478,6 +805,42 @@ handleForm($("#shoppingForm"), async form => {
   await loadData();
 });
 
+handleForm($("#eventForm"), async form => {
+  const id = form.elements.namedItem("id").value;
+
+  const invitedUserIds = Array.from(
+    form.querySelectorAll(
+      'input[name="invitedUserIds"]:checked'
+    ),
+    checkbox => Number(checkbox.value)
+  );
+
+  const body = {
+    description: $("#eventDescription").value.trim(),
+    eventDate: $("#eventDate").value,
+    invitedUserIds
+  };
+
+  if (!body.description) {
+    throw new Error("צריך למלא תיאור לאירוע.");
+  }
+
+  if (!body.eventDate) {
+    throw new Error("צריך לבחור תאריך לאירוע.");
+  }
+
+  await api(
+    id ? `/events/${id}` : "/events",
+    id ? "PUT" : "POST",
+    body
+  );
+
+  $("#eventDialog").close();
+  notify(id ? "האירוע עודכן." : "האירוע נוסף ללוח.");
+
+  await loadData();
+});
+
 handleForm($("#memberForm"), async form => {
   const username = $("#memberUsername").value.trim();
   const password = $("#memberPassword").value;
@@ -516,7 +879,15 @@ document.querySelectorAll("[data-filter]").forEach(button => button.addEventList
 $("#searchInput").addEventListener("input", render);
 $("#dayFilter").addEventListener("change", render);
 $("#refreshButton").addEventListener("click", () => loadData());
-$("#primaryAction").addEventListener("click", () => state.view === "shopping" ? openShopping() : openTask());
+$("#primaryAction").addEventListener("click", () => {
+  if (state.view === "events") {
+    openEvent();
+  } else if (state.view === "shopping") {
+    openShopping();
+  } else {
+    openTask();
+  }
+});
 $("#openMembers").addEventListener("click", () => {
   if (!isAdmin()) return;
   resetForm($("#memberForm"));
@@ -538,8 +909,31 @@ $("#logoutButton").addEventListener("click", event => runButtonAction(event.curr
   form.submit();
 }));
 
-$("#today").textContent = new Intl.DateTimeFormat("he-IL", {
-  timeZone: "Asia/Jerusalem", weekday: "long", day: "numeric", month: "long"
-}).format(new Date());
+const now = new Date();
+
+const gregorianToday = new Intl.DateTimeFormat("he-IL", {
+  timeZone: "Asia/Jerusalem",
+  weekday: "long",
+  day: "numeric",
+  month: "long"
+}).format(now);
+
+const israelParts = Object.fromEntries(
+  new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Jerusalem",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(now).map(part => [part.type, part.value])
+);
+
+const todayDate = new Date(Date.UTC(
+  Number(israelParts.year),
+  Number(israelParts.month) - 1,
+  Number(israelParts.day)
+));
+
+$("#today").textContent =
+  `${gregorianToday} · ${formatHebrewDate(todayDate)}`;
 render();
 loadData(true);

@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="he" dir="rtl">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -9,47 +10,259 @@
   <link rel="stylesheet" href="/assets/styles.css">
   <script src="/assets/app.js" defer></script>
 </head>
+
 <body class="app-page">
   <a class="skip-link" href="#mainContent">דילוג לתוכן</a>
   <aside class="sidebar">
-    <a class="brand" href="/"><img src="/assets/favicon.svg" width="43" height="43" alt=""><span>ביחד בבית<small>הדברים הקטנים, של כולנו</small></span></a>
+    <a class="brand" href="/"><img src="/assets/favicon.svg" width="43" height="43" alt=""><span>ביחד בבית<small>הדברים
+          הקטנים, של כולנו</small></span></a>
     <span class="sidebar-label">הבית שלנו</span>
     <nav class="main-nav" aria-label="ניווט ראשי">
-      <button class="nav-item active" data-view="tasks" type="button" aria-current="page"><svg class="icon"><use href="/assets/icons.svg#tasks"></use></svg><span>משימות הבית</span><span id="navTaskCount" class="nav-count">—</span></button>
-      <button class="nav-item" data-view="shopping" type="button"><svg class="icon"><use href="/assets/icons.svg#shopping"></use></svg><span>רשימת קניות</span><span id="navShoppingCount" class="nav-count">—</span></button>
+      <button class="nav-item active" data-view="tasks" type="button" aria-current="page"><svg class="icon">
+          <use href="/assets/icons.svg#tasks"></use>
+        </svg><span>משימות הבית</span><span id="navTaskCount" class="nav-count">—</span></button>
+      <button class="nav-item" data-view="shopping" type="button"><svg class="icon">
+          <use href="/assets/icons.svg#shopping"></use>
+        </svg><span>רשימת קניות</span><span id="navShoppingCount" class="nav-count">—</span></button>
+      <button class="nav-item" data-view="events" type="button">
+        <svg class="icon">
+          <use href="/assets/icons.svg#clock"></use>
+        </svg>
+        <span>אירועים משפחתיים</span>
+        <span id="navEventCount" class="nav-count">—</span>
+      </button>
     </nav>
-    <div id="adminNavigation" class="admin-navigation" hidden><span class="sidebar-label">ניהול המשפחה</span><button id="openMembers" class="nav-item" type="button" aria-label="ניהול בני המשפחה" title="ניהול בני המשפחה"><svg class="icon"><use href="/assets/icons.svg#users"></use></svg><span>בני המשפחה</span></button></div>
-    <div class="sidebar-note"><svg class="icon"><use href="/assets/icons.svg#home"></use></svg><strong>כל אחד עושה קצת.</strong><span>ביחד זה עושה הבדל.</span></div>
-    <div class="account-block"><span id="userAvatar" class="avatar">·</span><div class="account-info"><b id="currentUsername">מתחברים…</b><span id="currentRole">החשבון שלך</span></div><button id="logoutButton" class="icon-button" type="button" aria-label="יציאה מהחשבון" title="יציאה מהחשבון"><svg class="icon"><use href="/assets/icons.svg#logout"></use></svg></button></div>
+    <div id="adminNavigation" class="admin-navigation" hidden><span class="sidebar-label">ניהול המשפחה</span><button
+        id="openMembers" class="nav-item" type="button" aria-label="ניהול בני המשפחה" title="ניהול בני המשפחה"><svg
+          class="icon">
+          <use href="/assets/icons.svg#users"></use>
+        </svg><span>בני המשפחה</span></button></div>
+    <div class="sidebar-note"><svg class="icon">
+        <use href="/assets/icons.svg#home"></use>
+      </svg><strong>כל אחד עושה קצת.</strong><span>ביחד זה עושה הבדל.</span></div>
+    <div class="account-block"><span id="userAvatar" class="avatar">·</span>
+      <div class="account-info"><b id="currentUsername">מתחברים…</b><span id="currentRole">החשבון שלך</span></div>
+      <button id="logoutButton" class="icon-button" type="button" aria-label="יציאה מהחשבון" title="יציאה מהחשבון"><svg
+          class="icon">
+          <use href="/assets/icons.svg#logout"></use>
+        </svg></button>
+    </div>
   </aside>
 
   <main id="mainContent" class="main-content" tabindex="-1">
-    <header class="topbar"><div class="topbar-context"><span class="status-dot"></span><span>הלוח המשפחתי שלנו</span></div><time id="today"></time></header>
-    <section class="page-heading"><div><span id="pageEyebrow" class="eyebrow">קצת סדר, הרבה ביחד</span><h1 id="pageTitle">משימות הבית</h1><p id="pageDescription" class="muted">כל המשימות במקום אחד. כל אחד יודע מה החלק שלו.</p></div><button id="primaryAction" class="button button-primary" type="button" hidden><svg class="icon"><use href="/assets/icons.svg#plus"></use></svg><span>הוספת משימה</span></button></section>
+    <header class="topbar">
+      <div class="topbar-context"><span class="status-dot"></span><span>הלוח המשפחתי שלנו</span></div><time
+        id="today"></time>
+    </header>
+    <section class="page-heading">
+      <div><span id="pageEyebrow" class="eyebrow">קצת סדר, הרבה ביחד</span>
+        <h1 id="pageTitle">משימות הבית</h1>
+        <p id="pageDescription" class="muted">כל המשימות במקום אחד. כל אחד יודע מה החלק שלו.</p>
+      </div><button id="primaryAction" class="button button-primary" type="button" hidden><svg class="icon">
+          <use href="/assets/icons.svg#plus"></use>
+        </svg><span>הוספת משימה</span></button>
+    </section>
     <section class="stats-grid" aria-label="סיכום הרשימה">
-      <article class="stat-card"><div><span id="statLabel1">משימות פתוחות</span><strong id="statValue1">—</strong></div><span class="stat-icon sage"><svg class="icon"><use id="statIcon1" href="/assets/icons.svg#tasks"></use></svg></span></article>
-      <article class="stat-card"><div><span id="statLabel2">באחריותי</span><strong id="statValue2">—</strong></div><span class="stat-icon peach"><svg class="icon"><use id="statIcon2" href="/assets/icons.svg#users"></use></svg></span></article>
-      <article class="stat-card"><div><span id="statLabel3">כבר הושלמו</span><strong id="statValue3">—</strong></div><span class="stat-icon lavender"><svg class="icon"><use id="statIcon3" href="/assets/icons.svg#check"></use></svg></span></article>
+      <article class="stat-card">
+        <div><span id="statLabel1">משימות פתוחות</span><strong id="statValue1">—</strong></div><span
+          class="stat-icon sage"><svg class="icon">
+            <use id="statIcon1" href="/assets/icons.svg#tasks"></use>
+          </svg></span>
+      </article>
+      <article class="stat-card">
+        <div><span id="statLabel2">באחריותי</span><strong id="statValue2">—</strong></div><span
+          class="stat-icon peach"><svg class="icon">
+            <use id="statIcon2" href="/assets/icons.svg#users"></use>
+          </svg></span>
+      </article>
+      <article class="stat-card">
+        <div><span id="statLabel3">כבר הושלמו</span><strong id="statValue3">—</strong></div><span
+          class="stat-icon lavender"><svg class="icon">
+            <use id="statIcon3" href="/assets/icons.svg#check"></use>
+          </svg></span>
+      </article>
     </section>
     <p id="pageError" class="notice" role="alert" hidden></p>
     <section class="board" aria-labelledby="boardTitle">
-      <div class="board-heading"><div><h2 id="boardTitle">מה עושים השבוע?</h2><span id="boardCount" class="muted">טוענים את הרשימה…</span></div><button id="refreshButton" class="button button-quiet" type="button"><svg class="icon"><use href="/assets/icons.svg#refresh"></use></svg><span>רענון</span></button></div>
-      <div class="board-toolbar"><div id="taskFilters" class="segmented-control" aria-label="סינון משימות"><button class="selected" data-filter="all" type="button" aria-pressed="true">הכול</button><button data-filter="mine" type="button" aria-pressed="false">באחריותי</button><button data-filter="open" type="button" aria-pressed="false">פתוחות</button><button data-filter="done" type="button" aria-pressed="false">הושלמו</button></div><div class="search-controls"><label class="search-field"><svg class="icon"><use href="/assets/icons.svg#search"></use></svg><input id="searchInput" type="search" aria-label="חיפוש ברשימה" placeholder="חיפוש משימה או אחראי…"></label><select id="dayFilter" aria-label="סינון לפי יום"><option value="all">כל הימים</option><option value="0">ראשון</option><option value="1">שני</option><option value="2">שלישי</option><option value="3">רביעי</option><option value="4">חמישי</option><option value="5">שישי</option><option value="6">שבת</option></select></div></div>
+      <div class="board-heading">
+        <div>
+          <h2 id="boardTitle">מה עושים השבוע?</h2><span id="boardCount" class="muted">טוענים את הרשימה…</span>
+        </div><button id="refreshButton" class="button button-quiet" type="button"><svg class="icon">
+            <use href="/assets/icons.svg#refresh"></use>
+          </svg><span>רענון</span></button>
+      </div>
+      <div class="board-toolbar">
+        <div id="taskFilters" class="segmented-control" aria-label="סינון משימות"><button class="selected"
+            data-filter="all" type="button" aria-pressed="true">הכול</button><button data-filter="mine" type="button"
+            aria-pressed="false">באחריותי</button><button data-filter="open" type="button"
+            aria-pressed="false">פתוחות</button><button data-filter="done" type="button"
+            aria-pressed="false">הושלמו</button></div>
+        <div class="search-controls"><label class="search-field"><svg class="icon">
+              <use href="/assets/icons.svg#search"></use>
+            </svg><input id="searchInput" type="search" aria-label="חיפוש ברשימה"
+              placeholder="חיפוש משימה או אחראי…"></label><select id="dayFilter" aria-label="סינון לפי יום">
+            <option value="all">כל הימים</option>
+            <option value="0">ראשון</option>
+            <option value="1">שני</option>
+            <option value="2">שלישי</option>
+            <option value="3">רביעי</option>
+            <option value="4">חמישי</option>
+            <option value="5">שישי</option>
+            <option value="6">שבת</option>
+          </select></div>
+      </div>
       <div id="loadingState" class="loading-state" role="status"><span class="spinner"></span>רגע, מסדרים את הלוח…</div>
-      <div id="tableContainer" class="table-container" hidden><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
-      <div id="emptyState" class="empty-state" hidden><span class="empty-icon"><svg class="icon"><use id="emptyIcon" href="/assets/icons.svg#tasks"></use></svg></span><h3 id="emptyTitle">מתחילים בלוח נקי</h3><p id="emptyDescription" class="muted"></p><button id="emptyAction" class="button button-primary" type="button" hidden></button></div>
-      <footer class="board-footer"><span id="boardNote"><svg class="icon"><use href="/assets/icons.svg#users"></use></svg><span>כולם רואים את הלוח. האחראי למשימה מסמן ביצוע.</span></span><span id="lastSynced" class="muted"></span></footer>
+      <div id="tableContainer" class="table-container" hidden>
+        <table>
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty-state" hidden><span class="empty-icon"><svg class="icon">
+            <use id="emptyIcon" href="/assets/icons.svg#tasks"></use>
+          </svg></span>
+        <h3 id="emptyTitle">מתחילים בלוח נקי</h3>
+        <p id="emptyDescription" class="muted"></p><button id="emptyAction" class="button button-primary" type="button"
+          hidden></button>
+      </div>
+      <footer class="board-footer"><span id="boardNote"><svg class="icon">
+            <use href="/assets/icons.svg#users"></use>
+          </svg><span>כולם רואים את הלוח. האחראי למשימה מסמן ביצוע.</span></span><span id="lastSynced"
+          class="muted"></span></footer>
     </section>
     <footer class="page-footer"><span>ביחד בבית</span><span>פחות לזכור לבד. יותר לעשות ביחד.</span></footer>
   </main>
 
-  <dialog id="taskDialog" class="form-dialog" aria-labelledby="taskDialogTitle"><form id="taskForm" method="post" action="/tasks"><div class="dialog-header"><div><span class="eyebrow">משימות הבית</span><h2 id="taskDialogTitle">משימה חדשה</h2></div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button></div><input name="id" type="hidden"><label for="taskName">מה צריך לעשות?</label><input id="taskName" name="name" maxlength="255" placeholder="למשל, להשקות את העציצים" required><div class="form-grid"><div><label for="taskDay">יום בשבוע</label><select id="taskDay" name="day" required><option value="Sunday">ראשון</option><option value="Monday">שני</option><option value="Tuesday">שלישי</option><option value="Wednesday">רביעי</option><option value="Thursday">חמישי</option><option value="Friday">שישי</option><option value="Saturday">שבת</option></select></div><div><label for="taskAssignee">מי אחראי?</label><select id="taskAssignee" name="assigneeId" required></select></div></div><label for="taskDescription">פרטים נוספים <span class="optional">לא חובה</span></label><textarea id="taskDescription" name="description" rows="3" maxlength="255" placeholder="כל מה שכדאי לדעת על המשימה"></textarea><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">שמירת המשימה</button><button class="button button-secondary" data-close type="button">ביטול</button></div></form></dialog>
+  <dialog id="taskDialog" class="form-dialog" aria-labelledby="taskDialogTitle">
+    <form id="taskForm" method="post" action="/tasks">
+      <div class="dialog-header">
+        <div><span class="eyebrow">משימות הבית</span>
+          <h2 id="taskDialogTitle">משימה חדשה</h2>
+        </div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon">
+            <use href="/assets/icons.svg#close"></use>
+          </svg></button>
+      </div><input name="id" type="hidden"><label for="taskName">מה צריך לעשות?</label><input id="taskName" name="name"
+        maxlength="255" placeholder="למשל, להשקות את העציצים" required>
+      <div class="form-grid">
+        <div><label for="taskDay">יום בשבוע</label><select id="taskDay" name="day" required>
+            <option value="Sunday">ראשון</option>
+            <option value="Monday">שני</option>
+            <option value="Tuesday">שלישי</option>
+            <option value="Wednesday">רביעי</option>
+            <option value="Thursday">חמישי</option>
+            <option value="Friday">שישי</option>
+            <option value="Saturday">שבת</option>
+          </select></div>
+        <div><label for="taskAssignee">מי אחראי?</label><select id="taskAssignee" name="assigneeId" required></select>
+        </div>
+      </div><label for="taskDescription">פרטים נוספים <span class="optional">לא חובה</span></label><textarea
+        id="taskDescription" name="description" rows="3" maxlength="255"
+        placeholder="כל מה שכדאי לדעת על המשימה"></textarea>
+      <p class="form-error notice" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button button-primary" type="submit">שמירת המשימה</button><button
+          class="button button-secondary" data-close type="button">ביטול</button></div>
+    </form>
+  </dialog>
 
-  <dialog id="shoppingDialog" class="form-dialog" aria-labelledby="shoppingDialogTitle"><form id="shoppingForm" method="post" action="/shopping-items"><div class="dialog-header"><div><span class="eyebrow">רשימת הקניות</span><h2 id="shoppingDialogTitle">מה חסר בבית?</h2></div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button></div><input name="id" type="hidden"><label for="productName">שם המוצר</label><input id="productName" name="productName" maxlength="255" placeholder="למשל, חלב או עגבניות" required><label for="productQuantity">כמות יחידות</label><input id="productQuantity" class="quantity-input" name="quantity" type="number" min="1" max="2147483647" step="1" value="1" required><p class="field-help">תאריך העדכון נקבע אוטומטית בשמירה. מוצר שלא עודכן במשך שבוע יוסר בניקוי היומי.</p><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">שמירה ברשימה</button><button class="button button-secondary" data-close type="button">ביטול</button></div></form></dialog>
+  <dialog id="shoppingDialog" class="form-dialog" aria-labelledby="shoppingDialogTitle">
+    <form id="shoppingForm" method="post" action="/shopping-items">
+      <div class="dialog-header">
+        <div><span class="eyebrow">רשימת הקניות</span>
+          <h2 id="shoppingDialogTitle">מה חסר בבית?</h2>
+        </div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon">
+            <use href="/assets/icons.svg#close"></use>
+          </svg></button>
+      </div><input name="id" type="hidden"><label for="productName">שם המוצר</label><input id="productName"
+        name="productName" maxlength="255" placeholder="למשל, חלב או עגבניות" required><label for="productQuantity">כמות
+        יחידות</label><input id="productQuantity" class="quantity-input" name="quantity" type="number" min="1"
+        max="2147483647" step="1" value="1" required>
+      <p class="field-help">תאריך העדכון נקבע אוטומטית בשמירה. מוצר שלא עודכן במשך שבוע יוסר בניקוי היומי.</p>
+      <p class="form-error notice" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button button-primary" type="submit">שמירה ברשימה</button><button
+          class="button button-secondary" data-close type="button">ביטול</button></div>
+    </form>
+  </dialog>
 
-  <dialog id="memberDialog" class="form-dialog" aria-labelledby="memberDialogTitle"><form id="memberForm" method="post" action="/members"><div class="dialog-header"><div><span class="eyebrow">ניהול המשפחה</span><h2 id="memberDialogTitle">בני המשפחה</h2></div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button></div><div id="membersList" class="members-list" aria-label="חשבונות המשפחה"></div><div class="form-section-title">הוספת בן או בת משפחה</div><label for="memberUsername">שם משתמש</label><input id="memberUsername" name="username" dir="ltr" autocomplete="off" pattern="[A-Za-z0-9_]{3,30}" minlength="3" maxlength="30" placeholder="למשל, daniel" required><p class="field-help">3–30 אותיות באנגלית, ספרות או קו תחתון.</p><label for="memberPassword">סיסמה התחלתית</label><input id="memberPassword" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="72" required><p class="field-help">לפחות 8 תווים. החשבון החדש יוכל לצפות במשימות, לסמן את המשימות שלו ולנהל קניות.</p><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">יצירת חשבון</button><button class="button button-secondary" data-close type="button">סגירה</button></div></form></dialog>
+  <dialog id="eventDialog" class="form-dialog" aria-labelledby="eventDialogTitle">
 
-  <dialog id="confirmDialog" class="form-dialog confirm-dialog" aria-labelledby="confirmTitle"><form id="confirmForm" method="dialog"><div class="dialog-header"><h2 id="confirmTitle">למחוק מהרשימה?</h2><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button></div><p id="confirmDescription" class="muted"></p><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-danger" type="submit">כן, למחוק</button><button class="button button-secondary" data-close type="button">להשאיר ברשימה</button></div></form></dialog>
+    <form id="eventForm" method="post" action="/events">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">אירועים משפחתיים</span>
+          <h2 id="eventDialogTitle">אירוע חדש</h2>
+        </div>
+
+        <button class="icon-button" data-close type="button" aria-label="סגירה">
+          <svg class="icon">
+            <use href="/assets/icons.svg#close"></use>
+          </svg>
+        </button>
+      </div>
+
+      <input name="id" type="hidden">
+
+      <label for="eventDescription">מה האירוע?</label>
+      <input id="eventDescription" name="description" maxlength="255" placeholder="למשל, ארוחת ערב משפחתית" required>
+
+      <label for="eventDate">תאריך האירוע</label>
+      <input id="eventDate" name="eventDate" type="date" required>
+
+      <fieldset>
+        <legend>מי מוזמן?</legend>
+        <div id="eventInvitees"></div>
+      </fieldset>
+
+      <p class="form-error notice" role="alert" hidden></p>
+
+      <div class="dialog-actions">
+        <button class="button button-primary" type="submit">
+          שמירת האירוע
+        </button>
+        <button class="button button-secondary" data-close type="button">
+          ביטול
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="memberDialog" class="form-dialog" aria-labelledby="memberDialogTitle">
+    <form id="memberForm" method="post" action="/members">
+      <div class="dialog-header">
+        <div><span class="eyebrow">ניהול המשפחה</span>
+          <h2 id="memberDialogTitle">בני המשפחה</h2>
+        </div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon">
+            <use href="/assets/icons.svg#close"></use>
+          </svg></button>
+      </div>
+      <div id="membersList" class="members-list" aria-label="חשבונות המשפחה"></div>
+      <div class="form-section-title">הוספת בן או בת משפחה</div><label for="memberUsername">שם משתמש</label><input
+        id="memberUsername" name="username" dir="ltr" autocomplete="off" pattern="[A-Za-z0-9_]{3,30}" minlength="3"
+        maxlength="30" placeholder="למשל, daniel" required>
+      <p class="field-help">3–30 אותיות באנגלית, ספרות או קו תחתון.</p><label for="memberPassword">סיסמה
+        התחלתית</label><input id="memberPassword" name="password" type="password" autocomplete="new-password"
+        minlength="8" maxlength="72" required>
+      <p class="field-help">לפחות 8 תווים. החשבון החדש יוכל לצפות במשימות, לסמן את המשימות שלו ולנהל קניות.</p>
+      <p class="form-error notice" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button button-primary" type="submit">יצירת חשבון</button><button
+          class="button button-secondary" data-close type="button">סגירה</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog" class="form-dialog confirm-dialog" aria-labelledby="confirmTitle">
+    <form id="confirmForm" method="dialog">
+      <div class="dialog-header">
+        <h2 id="confirmTitle">למחוק מהרשימה?</h2><button class="icon-button" data-close type="button"
+          aria-label="סגירה"><svg class="icon">
+            <use href="/assets/icons.svg#close"></use>
+          </svg></button>
+      </div>
+      <p id="confirmDescription" class="muted"></p>
+      <p class="form-error notice" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button button-danger" type="submit">כן, למחוק</button><button
+          class="button button-secondary" data-close type="button">להשאיר ברשימה</button></div>
+    </form>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 </body>
+
 </html>

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
+import java.util.List;
+
 @RestController
 public class MemberController {
 
@@ -26,5 +28,10 @@ public class MemberController {
     @GetMapping("/me")
     public CurrentMemberResponse getMe(Principal principal) {
         return memberService.getCurrentMember(principal.getName());
+    }
+
+    @GetMapping("/members")
+    public List<AssigneeOption> getMembers() {
+        return memberService.getMembers();
     }
 }

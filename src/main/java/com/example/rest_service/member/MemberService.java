@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class MemberService {
 
@@ -66,5 +68,15 @@ public class MemberService {
                 user.getId(),
                 user.getUsername(),
                 user.getRole());
+    }
+
+    @Transactional(readOnly = true)
+    public List<AssigneeOption> getMembers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new AssigneeOption(
+                        user.getId(),
+                        user.getUsername()))
+                .toList();
     }
 }
