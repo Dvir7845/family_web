@@ -9,6 +9,10 @@ const parameters = new URLSearchParams(window.location.search);
 if (parameters.has("error")) {
   message.textContent = "שם המשתמש או הסיסמה אינם נכונים. אפשר לנסות שוב.";
   message.hidden = false;
+} else if (parameters.has("passwordChanged")) {
+  message.textContent = "הסיסמה שונתה. התחברו עם הסיסמה החדשה.";
+  message.classList.add("success");
+  message.hidden = false;
 } else if (parameters.has("logout")) {
   message.textContent = "יצאת מהחשבון. אפשר לחזור בכל רגע.";
   message.classList.add("success");

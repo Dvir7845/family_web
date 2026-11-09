@@ -31,6 +31,7 @@
         <span>אירועים משפחתיים</span>
         <span id="navEventCount" class="nav-count">—</span>
       </button>
+      <button id="vehicleNavigation" class="nav-item" data-view="vehicles" type="button" hidden>מי משתמש ברכב</button>
     </nav>
     <div id="adminNavigation" class="admin-navigation" hidden><span class="sidebar-label">ניהול המשפחה</span><button
         id="openMembers" class="nav-item" type="button" aria-label="ניהול בני המשפחה" title="ניהול בני המשפחה"><svg
@@ -40,6 +41,7 @@
     <div class="sidebar-note"><svg class="icon">
         <use href="/assets/icons.svg#home"></use>
       </svg><strong>כל אחד עושה קצת.</strong><span>ביחד זה עושה הבדל.</span></div>
+    <button id="openPassword" class="nav-item" type="button">שינוי סיסמה</button>
     <div class="account-block"><span id="userAvatar" class="avatar">·</span>
       <div class="account-info"><b id="currentUsername">מתחברים…</b><span id="currentRole">החשבון שלך</span></div>
       <button id="logoutButton" class="icon-button" type="button" aria-label="יציאה מהחשבון" title="יציאה מהחשבון"><svg
@@ -111,6 +113,11 @@
             <option value="6">שבת</option>
           </select></div>
       </div>
+      <section id="vehicleBoard" hidden aria-label="לוח רכבים חודשי">
+        <div class="vehicle-toolbar"><label for="vehicleMonth">חודש</label><input id="vehicleMonth" type="month" min="0001-01" max="9999-12"><label for="vehicleSelect">רכב</label><select id="vehicleSelect"></select></div>
+        <p id="vehicleEmpty" class="muted" hidden>עדיין אין רכבים. מנהל שהוא נהג יכול להוסיף רכב.</p>
+        <div class="vehicle-calendar-scroll"><div id="vehicleCalendar" class="vehicle-calendar"></div></div>
+      </section>
       <div id="loadingState" class="loading-state" role="status"><span class="spinner"></span>רגע, מסדרים את הלוח…</div>
       <div id="tableContainer" class="table-container" hidden>
         <table>
@@ -225,6 +232,17 @@
     </form>
   </dialog>
 
+  <dialog id="passwordDialog" class="form-dialog" aria-labelledby="passwordDialogTitle">
+    <form id="passwordForm">
+      <h2 id="passwordDialogTitle">שינוי הסיסמה שלי</h2>
+      <label for="currentPassword">סיסמה נוכחית</label><input id="currentPassword" type="password" autocomplete="current-password" maxlength="72" required>
+      <label for="newPassword">סיסמה חדשה</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required>
+      <label for="confirmPassword">אימות הסיסמה החדשה</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required>
+      <p class="field-help">לפחות 8 תווים. לאחר השינוי יש להתחבר מחדש בכל המכשירים.</p>
+      <p class="form-error notice" role="alert" hidden></p>
+      <div class="dialog-actions"><button class="button button-primary" type="submit">שמירת סיסמה</button><button class="button button-secondary" type="button" data-close>ביטול</button></div>
+    </form>
+  </dialog>
   <dialog id="memberDialog" class="form-dialog" aria-labelledby="memberDialogTitle">
     <form id="memberForm" method="post" action="/members">
       <div class="dialog-header">
@@ -241,6 +259,7 @@
       <p class="field-help">3–30 אותיות באנגלית, ספרות או קו תחתון.</p><label for="memberPassword">סיסמה
         התחלתית</label><input id="memberPassword" name="password" type="password" autocomplete="new-password"
         minlength="8" maxlength="72" required>
+      <label class="driver-option"><input id="memberDriver" type="checkbox"> נהג / נהגת</label>
       <p class="field-help">לפחות 8 תווים. החשבון החדש יוכל לצפות במשימות, לסמן את המשימות שלו ולנהל קניות.</p>
       <p class="form-error notice" role="alert" hidden></p>
       <div class="dialog-actions"><button class="button button-primary" type="submit">יצירת חשבון</button><button
@@ -248,6 +267,9 @@
     </form>
   </dialog>
 
+  <dialog id="vehicleDialog" class="form-dialog" aria-labelledby="vehicleDialogTitle">
+    <form id="vehicleForm"><h2 id="vehicleDialogTitle">הוספת רכב</h2><label for="vehicleName">שם הרכב / מספר רישוי</label><input id="vehicleName" maxlength="100" required><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">שמירה</button><button class="button button-secondary" type="button" data-close>ביטול</button></div></form>
+  </dialog>
   <dialog id="confirmDialog" class="form-dialog confirm-dialog" aria-labelledby="confirmTitle">
     <form id="confirmForm" method="dialog">
       <div class="dialog-header">

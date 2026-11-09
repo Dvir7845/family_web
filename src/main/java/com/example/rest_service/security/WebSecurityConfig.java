@@ -14,7 +14,17 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 public class WebSecurityConfig {
 
     @Bean
-    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+    public org.springframework.security.core.session.SessionRegistry sessionRegistry() {
+        return new org.springframework.security.core.session.SessionRegistryImpl();
+    }
+
+    @Bean
+    public org.springframework.security.web.session.HttpSessionEventPublisher sessionEventPublisher() {
+        return new org.springframework.security.web.session.HttpSessionEventPublisher();
+    }
+
+    @Bean
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http, org.springframework.security.core.session.SessionRegistry sessions) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/login.html", "/assets/**", "/csrf", "/error").permitAll()
@@ -26,6 +36,14 @@ public class WebSecurityConfig {
                 .failureUrl("/login.html?error")
                 .permitAll())
             .httpBasic(Customizer.withDefaults())
+            .sessionManagement(session -> session.maximumSessions(-1)
+                .sessionRegistry(sessions).expiredSessionStrategy(event -> {
+                    event.getSessionInformation().expireNow();
+                    event.getRequest().getSession().invalidate();
+                    String accept = event.getRequest().getHeader("Accept");
+                    if (accept != null && accept.contains("application/json")) event.getResponse().setStatus(401);
+                    else event.getResponse().sendRedirect("/login.html?expired");
+                }))
             .logout(logout -> logout
                 .logoutSuccessUrl("/login.html?logout")
                 .invalidateHttpSession(true)

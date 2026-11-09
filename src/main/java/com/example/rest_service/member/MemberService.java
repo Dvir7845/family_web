@@ -45,6 +45,7 @@ public class MemberService {
                 passwordEncoder.encode(request.password()));
 
         user.changeRole(Role.MEMBER);
+        user.changeDriver(Boolean.TRUE.equals(request.driver()));
 
         try {
             user = userRepository.saveAndFlush(user);
@@ -54,7 +55,7 @@ public class MemberService {
                     "Could not create member: conflicting account data");
         }
 
-        return new AssigneeOption(user.getId(), user.getUsername());
+        return new AssigneeOption(user.getId(), user.getUsername(), user.isDriver());
     }
 
     @Transactional(readOnly = true)
@@ -67,7 +68,15 @@ public class MemberService {
         return new CurrentMemberResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getRole());
+                user.getRole(), user.isDriver());
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void changeDriver(Long id, boolean driver) {
+        AppUser user = userRepository.findById(id).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        user.changeDriver(driver);
     }
 
     @Transactional(readOnly = true)
@@ -76,7 +85,7 @@ public class MemberService {
                 .stream()
                 .map(user -> new AssigneeOption(
                         user.getId(),
-                        user.getUsername()))
+                        user.getUsername(), user.isDriver()))
                 .toList();
     }
 }

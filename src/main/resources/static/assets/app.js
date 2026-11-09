@@ -2,10 +2,12 @@
 
 const $ = selector => document.querySelector(selector);
 const state = {
-  view: ["tasks", "shopping", "events"].includes(location.hash.slice(1))
+  view: ["tasks", "shopping", "events", "vehicles"].includes(location.hash.slice(1))
     ? location.hash.slice(1)
     : "tasks",
   user: null,
+  vehicles: [], bookings: [], vehicleId: "",
+  vehicleMonth: new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit" }).format(new Date()),
   tasks: [],
   shopping: [],
   events: [],
@@ -41,6 +43,8 @@ function isAdmin() {
 
 function errorMessage(status, data) {
   const translations = {
+    "Current password is incorrect": "הסיסמה הנוכחית אינה נכונה.",
+    "Cannot delete your own account": "לא ניתן למחוק את החשבון שבו מחוברים.",
     "Task name is required": "צריך למלא שם למשימה.",
     "Day is required": "צריך לבחור יום בשבוע.",
     "Assignee is required": "צריך לבחור אחראי למשימה.",
@@ -51,7 +55,7 @@ function errorMessage(status, data) {
     "Password exceeds the supported byte length": "הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר."
   };
   if (data?.message && translations[data.message]) return translations[data.message];
-  const fieldNames = new Set(["name", "day", "assigneeId", "productName", "quantity", "username", "password"]);
+  const fieldNames = new Set(["name", "day", "assigneeId", "productName", "quantity", "username", "password", "currentPassword", "newPassword"]);
   if (status === 400 && data && typeof data === "object") {
     const messages = Object.entries(data)
       .filter(([key, value]) => fieldNames.has(key) && typeof value === "string")
@@ -63,7 +67,7 @@ function errorMessage(status, data) {
     401: "ההתחברות הסתיימה. צריך להיכנס שוב.",
     403: "אין הרשאה לפעולה הזאת, או שההתחברות השתנתה. נסו לרענן את העמוד.",
     404: "הפריט כבר לא נמצא או שהפעולה אינה זמינה עבורך. כדאי לרענן את הרשימה.",
-    409: "שם המשתמש כבר תפוס. בחרו שם אחר."
+    409: "הפרטים כבר תפוסים. ייתכן שהמשבצת הוזמנה בינתיים; רעננו ונסו שוב."
   })[status] || "לא הצלחנו להשלים את הפעולה. נסו שוב בעוד רגע.";
 }
 
@@ -164,6 +168,7 @@ async function loadData(initial = false) {
   if (state.loading) return;
   state.loading = true;
   $("#refreshButton").disabled = true;
+  $("#vehicleMonth").disabled = true;
   $("#pageError").hidden = true;
   if (initial || !state.loaded) {
     $("#loadingState").hidden = false;
@@ -179,6 +184,11 @@ async function loadData(initial = false) {
       api("/events")
     ]);
     state.user = user;
+    $("#vehicleNavigation").hidden = !user.driver;
+    if (!user.driver && state.view === "vehicles") state.view = "tasks";
+    if (user.driver) {
+      [state.vehicles, state.bookings] = await Promise.all([api("/vehicles"), api(`/vehicles/bookings?month=${state.vehicleMonth}`)]);
+    } else { state.vehicles = []; state.bookings = []; }
     state.tasks = tasks;
     state.shopping = shopping;
     state.assignees = assignees;
@@ -200,10 +210,12 @@ async function loadData(initial = false) {
     state.loading = false;
     $("#loadingState").hidden = true;
     $("#refreshButton").disabled = false;
+    $("#vehicleMonth").disabled = false;
   }
 }
 
 function setView(view) {
+  if (view === "vehicles" && !state.user?.driver) return;
   if (state.view !== view) {
     state.filter = "all";
     $("#searchInput").value = "";
@@ -215,6 +227,11 @@ function setView(view) {
 }
 
 function render() {
+  const vehicles = state.view === "vehicles" && state.user?.driver;
+  $("#vehicleBoard").hidden = !vehicles;
+  $(".board-toolbar").hidden = vehicles;
+  $(".stats-grid").hidden = vehicles;
+  if (vehicles) { renderVehicles(); return; }
   const shopping = state.view === "shopping";
   const events = state.view === "events";
   const tasks = state.view === "tasks";
@@ -743,6 +760,20 @@ function renderMembers() {
     const chip = document.createElement("span");
     chip.className = "member-chip";
     chip.append(avatar(member.username), textElement("span", "", member.username));
+    const label = document.createElement("label"); label.className = "driver-option";
+    const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.checked = member.driver;
+    checkbox.setAttribute("aria-label", "נהג: " + member.username);
+    checkbox.addEventListener("change", () => runButtonAction(checkbox, async () => {
+      try { await api("/members/" + member.id + "/driver", "PATCH", { driver: checkbox.checked }); }
+      finally { await loadData(); renderMembers(); }
+    }));
+    label.append(checkbox, "נהג / נהגת"); chip.append(label);
+    if (member.id !== state.user.id) chip.append(actionButton("trash", "מחיקת המשתמש " + member.username, () => confirmDelete(
+      "למחוק את המשתמש?", "החשבון של " + member.username + " יימחק. הזמנות הרכב שלו יבוטלו והמשימות יישארו ללא אחראי. לא ניתן לבטל את המחיקה.", async () => {
+        await api("/members/" + member.id, "DELETE");
+        await loadData(); renderMembers(); notify("המשתמש נמחק.");
+      }
+    ), true));
     list.append(chip);
   });
 }
@@ -841,11 +872,23 @@ handleForm($("#eventForm"), async form => {
   await loadData();
 });
 
+$("#openPassword").addEventListener("click", () => {
+  resetForm($("#passwordForm")); $("#passwordDialog").showModal(); $("#currentPassword").focus();
+});
+handleForm($("#passwordForm"), async () => {
+  const newPassword = $("#newPassword").value;
+  if (newPassword !== $("#confirmPassword").value) throw new Error("הסיסמאות החדשות אינן תואמות.");
+  if (new TextEncoder().encode(newPassword).length > 72) throw new Error("הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר.");
+  await api("/me/password", "PATCH", { currentPassword: $("#currentPassword").value, newPassword });
+  $("#passwordDialog").close();
+  location.assign("/login.html?passwordChanged");
+});
+
 handleForm($("#memberForm"), async form => {
   const username = $("#memberUsername").value.trim();
   const password = $("#memberPassword").value;
   if (new TextEncoder().encode(password).length > 72) throw new Error("הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר.");
-  await api("/members", "POST", { username, password });
+  await api("/members", "POST", { username, password, driver: $("#memberDriver").checked });
   form.reset();
   await loadData();
   renderMembers();
@@ -880,7 +923,9 @@ $("#searchInput").addEventListener("input", render);
 $("#dayFilter").addEventListener("change", render);
 $("#refreshButton").addEventListener("click", () => loadData());
 $("#primaryAction").addEventListener("click", () => {
-  if (state.view === "events") {
+  if (state.view === "vehicles") {
+    if (isAdmin() && state.user.driver) { resetForm($("#vehicleForm")); $("#vehicleDialog").showModal(); }
+  } else if (state.view === "events") {
     openEvent();
   } else if (state.view === "shopping") {
     openShopping();
@@ -937,3 +982,81 @@ $("#today").textContent =
   `${gregorianToday} · ${formatHebrewDate(todayDate)}`;
 render();
 loadData(true);
+
+function renderVehicles() {
+  document.title = "מי משתמש ברכב · ביחד בבית";
+  document.querySelectorAll("[data-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === "vehicles");
+    if (b.dataset.view === "vehicles") b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+  });
+  $("#pageTitle").textContent = "מי משתמש ברכב";
+  $("#pageEyebrow").textContent = "מתכננים את הנסיעות ביחד";
+  $("#pageDescription").textContent = "בחרו רכב וחודש ותפסו משבצת פנויה על שמכם.";
+  $("#boardTitle").textContent = "לוח שימוש חודשי";
+  $("#primaryAction").hidden = !isAdmin();
+  $("#primaryAction span").textContent = "הוספת רכב";
+  $("#tableContainer").hidden = true; $("#emptyState").hidden = true;
+  $("#boardNote").textContent = "בוקר · צהריים · ערב. רק המזמין או מנהל יכולים לבטל הזמנה.";
+  $("#vehicleMonth").value = state.vehicleMonth;
+  const select = $("#vehicleSelect"); select.replaceChildren();
+  state.vehicles.forEach(v => select.append(new Option(v.name, v.id)));
+  if (!state.vehicles.some(v => String(v.id) === String(state.vehicleId))) state.vehicleId = String(state.vehicles[0]?.id || "");
+  select.value = state.vehicleId;
+  $("#vehicleEmpty").hidden = state.vehicles.length > 0;
+  const calendar = $("#vehicleCalendar"); calendar.replaceChildren();
+  const bookings = state.bookings.filter(b => String(b.vehicleId) === state.vehicleId);
+  $("#boardCount").textContent = bookings.length + " משבצות מוזמנות בחודש הנבחר";
+  if (!state.vehicleId) return;
+  dayNames.forEach(day => calendar.append(textElement("div", "calendar-weekday", day)));
+  const [year, month] = state.vehicleMonth.split("-").map(Number);
+  const first = new Date(state.vehicleMonth + "-01T12:00:00Z");
+  const end = new Date(first); end.setUTCMonth(end.getUTCMonth() + 1); end.setUTCDate(0);
+  for (let i = 0; i < first.getUTCDay(); i++) calendar.append(textElement("div", "calendar-spacer", ""));
+  const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jerusalem" }).format(new Date());
+  for (let day = 1; day <= end.getUTCDate(); day++) {
+    const date = state.vehicleMonth + "-" + String(day).padStart(2, "0");
+    const cell = textElement("article", "calendar-day", "");
+    const weekday = dayNames[(first.getUTCDay() + day - 1) % 7];
+    cell.append(textElement("h3", "", `${day} · יום ${weekday}`));
+    for (const [slot, label] of [["MORNING", "בוקר"], ["AFTERNOON", "צהריים"], ["EVENING", "ערב"]]) {
+      const booking = bookings.find(b => b.date === date && b.slot === slot);
+      const button = textElement("button", "vehicle-slot" + (booking ? " booked" : ""), label + " · " + (booking ? booking.username : "פנוי"));
+      button.type = "button";
+      const canCancel = booking && (booking.userId === state.user.id || isAdmin());
+      button.disabled = booking ? !canCancel : date < today;
+      button.setAttribute("aria-label", date + " " + label + " " + (booking ? booking.username + (canCancel ? " — ביטול הזמנה" : "") : "הזמנת רכב"));
+      button.addEventListener("click", () => {
+        if (booking) confirmDelete("לבטל את ההזמנה?", date + " · " + label, async () => {
+          await api("/vehicles/bookings/" + booking.id, "DELETE"); notify("ההזמנה בוטלה.");
+        });
+        else runButtonAction(button, async () => {
+          try { await api("/vehicles/bookings", "POST", { vehicleId: Number(state.vehicleId), date, slot }); notify("הרכב הוזמן על שמך."); }
+          finally { await loadData(); }
+        });
+      });
+      cell.append(button);
+    }
+    calendar.append(cell);
+  }
+}
+$("#vehicleSelect").addEventListener("change", event => { state.vehicleId = event.target.value; render(); });
+$("#vehicleMonth").addEventListener("change", async event => {
+  if (state.loading) {
+    event.target.value = state.vehicleMonth;
+    return;
+  }
+
+  if (
+    !event.target.validity.valid ||
+    !/^\d{4}-\d{2}$/.test(event.target.value)
+  ) {
+    return;
+  }
+
+  state.vehicleMonth = event.target.value;
+  await loadData();
+});
+handleForm($("#vehicleForm"), async () => {
+  await api("/vehicles", "POST", { name: $("#vehicleName").value.trim() });
+  $("#vehicleDialog").close(); await loadData(); notify("הרכב נוסף.");
+});

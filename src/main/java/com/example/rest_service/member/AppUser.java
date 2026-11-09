@@ -27,6 +27,12 @@ public class AppUser {
     @Column(nullable = false, length = 20)
     private Role role = Role.MEMBER;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean driver;
+
+    public boolean isDriver() { return driver; }
+    public void changeDriver(boolean driver) { this.driver = driver; }
+
     protected AppUser() {
     }
 
@@ -50,6 +56,8 @@ public class AppUser {
     public Role getRole() {
         return role;
     }
+
+    public void changePassword(String passwordHash) { this.passwordHash = passwordHash; }
 
     public void changeRole(Role role) {
         this.role = role;

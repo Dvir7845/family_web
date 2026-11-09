@@ -1,8 +1,18 @@
-# Family Tasks API
+﻿# Family Tasks API
 
-A Spring Boot backend for a shared family task board. Family members can see who is responsible for each task and whether it has been completed. Administrators manage tasks and member accounts; only the assigned member can mark a task as completed.
+A shared family home board built with Spring Boot and a Hebrew, right-to-left browser interface. The application brings together household tasks, shopping, family events, member accounts and vehicle bookings.
 
-This is a learning and portfolio project for one family. A responsive Hebrew, right-to-left browser interface is served by the same Spring Boot application as the API. Hosted deployment is planned.
+This is a learning and portfolio project for a single family. The frontend is served by the same application as the API and requires no frontend installation or build step. Hosted deployment is planned.
+
+## Features
+
+- **Tasks:** shared visibility, assignment, search, day/status filters and completion by the assigned member. Administrators create, edit, reassign and delete tasks.
+- **Shopping:** all signed-in family members can add, update and remove products. The server tracks update times and automatically removes stale items.
+- **Family events:** shared events with dates, invitee selection, editing and automatic cleanup of old events. The interface displays Gregorian and Hebrew dates.
+- **Member management:** administrators create accounts, enable or revoke driver status, and delete other users after confirmation.
+- **Password changes:** each user can change their own password by supplying the current password. The user must sign in again afterward.
+- **Vehicles:** drivers can select a vehicle and month, see who booked each day, and reserve morning, afternoon or evening slots. Only administrators who are also drivers can add vehicles.
+- **Mobile layout:** two-column navigation on phones, daily vehicle cards, stacked form fields, wrapping buttons and long text, and scrollable dialogs that fit narrow screens.
 
 ## Stack
 
@@ -12,25 +22,40 @@ This is a learning and portfolio project for one family. A responsive Hebrew, ri
 - JUnit, Mockito, Spring Security Test and MockMvc
 - H2 for isolated automated tests
 - Maven Wrapper
-- HTML, CSS and browser JavaScript; no frontend installation or build step
+- HTML, CSS and browser JavaScript
+- Node.js built-in modules for the vehicle calendar UI test; no npm dependencies
 
 ## Permissions
 
+The `ADMIN` / `MEMBER` role and the boolean `driver` flag are separate. Being an administrator does not automatically grant access to vehicles. These rules are enforced by the server as well as the interface.
+
 | Action | Member | Administrator |
 | --- | --- | --- |
-| View all family tasks and assigned members | Yes | Yes |
+| View shared tasks and list family members | Yes | Yes |
 | Complete a task assigned to the current user | Yes | Yes |
 | Create, edit, reassign or delete tasks | No | Yes |
-| List possible assignees and create member accounts | No | Yes |
+| Manage shared shopping items and family events | Yes | Yes |
+| Change own password using the current password | Yes | Yes |
+| Create member accounts | No | Yes |
+| Enable or revoke a user's driver status | No | Yes |
+| Delete another user | No | Yes |
+| Delete own account | No | No |
+| View vehicles and monthly bookings | Drivers only | Drivers only |
+| Reserve a vehicle slot on own behalf | Drivers only | Drivers only |
+| Cancel own booking | Drivers only | Drivers only |
+| Cancel another user's booking | No | Drivers only |
+| Add a vehicle | No | Drivers only |
 
-Passwords are hashed with BCrypt. Member creation always assigns the `MEMBER` role. API responses do not return password hashes.
+New accounts always receive the `MEMBER` role. The `driver` flag defaults to `false` when omitted, including for existing accounts when the column is added. `/me` and `/members` expose driver status without returning passwords or password hashes.
 
 ## Run locally on Windows
 
-Prerequisites: JDK 25, PostgreSQL, and PowerShell. Maven does not need to be installed separately.
+Prerequisites: JDK 25, PostgreSQL and PowerShell. Maven does not need to be installed separately. Node.js is optional and is only needed to run the standalone JavaScript test.
+
+Run the following commands from the directory containing `pom.xml`, `mvnw.cmd` and `start-server.ps1`.
 
 1. Create a PostgreSQL database named `family_tasks`.
-2. Review `src/main/resources/application.properties`. The local defaults use `localhost:5432`, database `family_tasks`, and database user `postgres`.
+2. Review [application.properties](src/main/resources/application.properties). The local defaults use `localhost:5432`, database `family_tasks` and database user `postgres`.
 3. On the **first run against an empty database**, choose the initial application password in PowerShell:
 
    ```powershell
@@ -38,9 +63,9 @@ Prerequisites: JDK 25, PostgreSQL, and PowerShell. Maven does not need to be ins
    $env:APP_LOGIN_PASSWORD = [System.Net.NetworkCredential]::new("", $initialSecret).Password
    ```
 
-   The application creates the initial administrator with username `dvir`. This variable is only needed to create that account; changing it later does not change the stored password.
+   The application creates the initial administrator with username `dvir`. This variable is only needed to create that account; changing it later does not change the stored password. Use the interface's password change form for an existing account.
 
-4. From the project directory, run:
+4. Start the server:
 
    ```powershell
    powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start-server.ps1
@@ -50,42 +75,125 @@ Prerequisites: JDK 25, PostgreSQL, and PowerShell. Maven does not need to be ins
 
 5. Open `http://localhost:8080/` and sign in. Use Ctrl+C to stop the server.
 
+### Enable vehicle access
+
+1. Sign in as an administrator and open **בני המשפחה** (family members).
+2. Select **נהג / נהגת** for the users who should have vehicle access. The administrator must also be marked as a driver to use vehicle management.
+3. Open **מי משתמש ברכב** (vehicle usage). An administrator who is a driver can add a vehicle.
+4. Select a vehicle and month, then choose a free morning, afternoon or evening slot. The reservation is made for the signed-in user.
+
+The database must remain available while the application runs. Development schema management uses `spring.jpa.hibernate.ddl-auto=update`; on the next startup it adds the driver column and vehicle tables to an existing database. Restart the server after backend changes, rebuild any executable JAR in use, and refresh the browser to load updated frontend assets.
+
 ## Browser interface
 
-- Shared task board, search, day/status filters, assignment and completion.
-- Administrators can add, edit and delete tasks and create family member accounts.
-- Shared shopping list: all signed-in members can add, edit and remove products. Last-update times are displayed in the Asia/Jerusalem timezone.
-- The browser supplies CSRF tokens automatically for login, logout and changes. Passwords and tokens are not saved in browser storage.
-- Data is loaded from the real API. Use the refresh button to see changes made by other family members.
+The interface lives in [src/main/resources/static](src/main/resources/static). It includes task, shopping, event and driver-only vehicle tabs, administrator member management and a password change button for every user.
 
-The interface lives in `src/main/resources/static`. `WebSecurityConfig` defines the custom login page and keeps business endpoints protected; `CsrfController` supplies session-bound tokens. Existing JSON endpoints and HTTP Basic clients remain supported.
+- Desktop vehicle usage is displayed as a monthly grid. At phone widths up to 580px, it becomes a list of daily cards with the weekday and three booking buttons.
+- On phones, navigation uses two columns. Tables become cards, form fields stack, action buttons wrap and long names/descriptions stay within their containers.
+- On tablets up to 820px, navigation and account controls use a compact header. On wider screens the sidebar layout is retained.
+- The browser supplies CSRF tokens for login, logout and changes. Passwords and tokens are not saved in browser storage.
+- Data is loaded from the API. Use the refresh button to see changes made by other family members.
+- Shopping update times and the displayed current date use the `Asia/Jerusalem` timezone.
 
-The database must remain available while the application runs. Development schema management currently uses `spring.jpa.hibernate.ddl-auto=update`.
+## Accounts and passwords
+
+Administrators can mark new users as drivers during account creation or change the flag for existing users. Usernames contain 3–30 English letters, digits or underscores. Created accounts use passwords of 8–72 characters, subject to BCrypt's 72-byte UTF-8 limit.
+
+Every user can open **שינוי סיסמה** (change password), enter the current password and confirm a new password. The new password must contain 8–72 characters and at most 72 UTF-8 bytes. Passwords are hashed with BCrypt. After a successful change, the current browser session is logged out and other registered sessions expire, requiring a new login.
+
+Deleting another user requires administrator access and confirmation in the interface. The deletion:
+
+- Preserves the user's tasks but removes their assignee.
+- Removes the user from event invitee lists while preserving the events.
+- Cancels the user's vehicle bookings while preserving vehicles.
+- Deletes the account and expires its registered sessions.
+
+Self-deletion is blocked. Session expiration is applied after the database transaction commits; other registered sessions are rejected on their next request.
+
+## Vehicle booking rules
+
+- Vehicle access requires `driver=true`, including for administrators.
+- Only an administrator who is a driver can add a vehicle, using a name or identifying label of up to 100 characters.
+- Each vehicle has three slots per date: `MORNING`, `AFTERNOON` and `EVENING`.
+- A database unique constraint prevents two bookings for the same vehicle, date and slot, including competing requests. A conflicting reservation returns HTTP `409`.
+- Reservations belong to the signed-in user; clients cannot choose another booking owner.
+- Dates before today in `Asia/Jerusalem` are rejected. There are no separate clock-time cutoffs for today's slots.
+- A driver can cancel their own booking. An administrator who is a driver can also cancel another user's booking.
+
+## Automatic cleanup
+
+- **Shopping:** the server sets `updatedAt` on creation and update. Items not updated for at least seven days are removed when the scheduled job first runs after startup, then with a 24-hour delay between runs. Viewing a list does not refresh update times.
+- **Events:** a daily job at midnight in `Asia/Jerusalem` removes events dated more than 30 days before today. Events exactly 30 days old remain until a later run.
 
 ## API overview
 
-All business endpoints require authentication. The login page, frontend assets and `/csrf` are public. Browser form login and HTTP Basic are supported. State-changing requests require a valid CSRF token; the browser interface handles this automatically, and the MockMvc tests demonstrate API usage.
+All business endpoints require authentication. The login page, frontend assets and `/csrf` are public. Browser form login and HTTP Basic are supported. State-changing requests require a valid CSRF token; the browser interface handles this automatically. The MockMvc tests demonstrate authenticated requests and CSRF usage.
 
-| Method | Path | Purpose |
+| Method | Path | Purpose / permission |
 | --- | --- | --- |
-| GET | `/me` | Current user's ID, username and role |
-| GET | `/tasks` | Shared family task board |
+| GET | `/csrf` | Obtain a CSRF token |
+| GET | `/me` | Current user's ID, username, role and driver flag |
+| PATCH | `/me/password` | Change own password using the current password |
+| GET | `/members` | List member IDs, usernames and driver flags; any signed-in user |
+| POST | `/members` | Create a `MEMBER` account; administrator only |
+| PATCH | `/members/{id}/driver` | Enable or revoke driver status; administrator only |
+| DELETE | `/members/{id}` | Delete another user; administrator only |
+| GET | `/tasks` | Shared task board |
 | GET | `/tasks/{id}` | Task details |
-| GET | `/tasks/assignees` | Available assignees; administrators only |
-| POST | `/tasks` | Create and assign a task; administrators only |
-| PUT | `/tasks/{id}` | Update task details and assignee; administrators only |
-| DELETE | `/tasks/{id}` | Delete a task; administrators only |
+| GET | `/tasks/assignees` | Available assignees; administrator only |
+| POST | `/tasks` | Create and assign a task; administrator only |
+| PUT | `/tasks/{id}` | Update task details and assignee; administrator only |
+| DELETE | `/tasks/{id}` | Delete a task; administrator only |
 | PATCH | `/tasks/{id}/complete` | Complete a task assigned to the current user |
-| POST | `/members` | Create a member account; administrators only |
 | GET | `/shopping-items` | Shared shopping list |
 | GET | `/shopping-items/{id}` | Shopping item details |
-| POST | `/shopping-items` | Add a product; any family member |
+| POST | `/shopping-items` | Add a product; any signed-in user |
 | PUT | `/shopping-items/{id}` | Edit product/quantity and refresh its update time |
-| DELETE | `/shopping-items/{id}` | Remove a product; any family member |
+| DELETE | `/shopping-items/{id}` | Remove a product; any signed-in user |
+| GET | `/events` | Shared family events |
+| GET | `/events/{id}` | Event details |
+| POST | `/events` | Create an event with invitees; any signed-in user |
+| PUT | `/events/{id}` | Update an event and invitees; any signed-in user |
+| DELETE | `/events/{id}` | Delete an event; any signed-in user |
+| POST | `/events/{eventId}/invite/{userId}` | Invite an existing user; any signed-in user |
+| GET | `/vehicles` | List vehicles; drivers only |
+| POST | `/vehicles` | Add a vehicle; administrator who is a driver only |
+| GET | `/vehicles/bookings?month=YYYY-MM` | Bookings across vehicles for the selected month; drivers only |
+| POST | `/vehicles/bookings` | Reserve a slot for the signed-in driver |
+| DELETE | `/vehicles/bookings/{id}` | Cancel own booking, or another user's booking as an administrator who is a driver |
 
-Shopping items store a server-generated `updatedAt`. Items not updated for at least seven days are removed on startup and then every 24 hours. Viewing the list does not refresh the date.
+### Request examples
 
-Example task request (use a real member ID):
+Use real IDs from your database. The values below are illustrative, not application credentials.
+
+Create a member (`POST /members`):
+
+```json
+{
+  "username": "family_member",
+  "password": "ExampleOnly123!",
+  "driver": true
+}
+```
+
+Enable driver access (`PATCH /members/{id}/driver`):
+
+```json
+{
+  "driver": true
+}
+```
+
+Change own password (`PATCH /me/password`):
+
+```json
+{
+  "currentPassword": "ExampleOnly123!",
+  "newPassword": "AnotherExampleOnly123!"
+}
+```
+
+Create a task (`POST /tasks`):
 
 ```json
 {
@@ -96,17 +204,57 @@ Example task request (use a real member ID):
 }
 ```
 
-The internal field `owner` currently represents the member assigned to perform a task. It does not restrict who can view the task.
+The internal task field `owner` represents the assigned member. It does not restrict who can view the task.
 
-## Tests
+Create an event (`POST /events`):
+
+```json
+{
+  "description": "Family dinner",
+  "eventDate": "2099-12-10",
+  "invitedUserIds": [2]
+}
+```
+
+Add a vehicle (`POST /vehicles`):
+
+```json
+{
+  "name": "Family car"
+}
+```
+
+Reserve a slot (`POST /vehicles/bookings`); choose today or a future date:
+
+```json
+{
+  "vehicleId": 1,
+  "date": "2099-12-10",
+  "slot": "MORNING"
+}
+```
+
+## Tests and validation
+
+Run the Java test suite:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
-The test suite uses mocked repositories or isolated H2 databases. It does not require a running PostgreSQL server or real database credentials. Fixed passwords in test sources are disposable test fixtures only.
+The suite uses mocked repositories or isolated H2 databases. It does not require a running PostgreSQL server or real database credentials. Fixed passwords in test sources are disposable test fixtures only.
 
-Coverage includes role restrictions, assignment, shared visibility, completion permissions, BCrypt password storage, authentication, response fields, shopping expiry, and browser login/CSRF/logout behavior.
+Coverage includes authentication, CSRF, task assignment/completion permissions, shared shopping and events, cleanup rules, account creation/deletion, BCrypt storage, current-password validation, session expiration, driver access, monthly bookings, cancellation permissions and duplicate-slot rejection.
+
+With Node.js installed, run the standalone vehicle calendar UI test from the project directory:
+
+```powershell
+node .\src\test\js\vehicle-calendar.test.cjs
+```
+
+This test uses Node.js built-in modules and a simulated DOM to check leap-year February, free/booked slots and administrator controls. It does not render CSS.
+
+The latest implementation checks passed all **52 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
 
 ## Build an executable JAR
 
@@ -127,19 +275,31 @@ For a new database, also set `APP_LOGIN_PASSWORD` before the first startup as de
 ## Project structure
 
 ```text
-com.example.rest_service
-├── RestServiceApplication
-├── task       # Task entity, API, business rules and persistence
-├── member     # Accounts, roles and safe response objects
-├── security   # Authentication and initial administrator setup
-└── exception  # Validation error handling
+src/
+├── main/
+│   ├── java/com/example/rest_service/
+│   │   ├── RestServiceApplication.java
+│   │   ├── task/       # Shared tasks, assignment and completion
+│   │   ├── shopping/   # Shopping items and expiry cleanup
+│   │   ├── event/      # Events, invitees and daily cleanup
+│   │   ├── vehicle/    # Vehicles, booking slots and driver restrictions
+│   │   ├── member/     # Accounts, passwords, deletion and driver management
+│   │   ├── security/   # Login, CSRF, session registry and initial administrator
+│   │   └── exception/  # Validation error handling
+│   └── resources/
+│       ├── application.properties
+│       └── static/     # Hebrew RTL pages, JavaScript, CSS and icons
+└── test/
+    ├── java/           # Unit, repository, API and security tests
+    └── js/             # Standalone vehicle calendar UI test
 ```
 
 ## Before hosted deployment
 
-- Add password change/reset flows.
-- Configure HTTPS, hosted PostgreSQL, backups, and secret management.
+- Configure HTTPS, hosted PostgreSQL, backups and secret management.
 - Replace development schema updates with managed database migrations.
-- Keep the current single-family scope explicit; multiple families would require membership and data isolation.
+- Add a forgotten-password recovery flow; authenticated password changes already exist.
+- The session registry is currently in memory in one application instance. Shared session storage and expiration coordination would be needed for multiple server instances.
+- Keep the single-family scope explicit; multiple families would require membership and data isolation.
 
-Do not commit real passwords, tokens, environment files or database backups. Build output is excluded through `.gitignore`.
+Do not commit real passwords, tokens, environment files or database backups. Build output, local preview files under `target/` and runtime logs are excluded through `.gitignore`.
