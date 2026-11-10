@@ -1853,3 +1853,13 @@ input, select, textarea { min-width: 0; max-width: 100%; }
   .login-panel { padding: 24px 18px; }
   .toast { width: max-content; overflow-wrap: anywhere; }
 }
+
+.vehicle-admin-actions { padding: 0 20px 16px; }
+.member-role { font-size: 11px; color: var(--muted); }
+.promote-member { white-space: normal; font-size: 12px; padding: 7px 10px; }
+@media (max-width: 580px) {
+  .vehicle-admin-actions { padding: 0 14px 14px; }
+  .vehicle-admin-actions .button { width: 100%; white-space: normal; min-height: 44px; }
+  .member-chip .member-role { grid-column: 2; }
+  .member-chip .promote-member { grid-column: 1 / -1; min-height: 44px; }
+}

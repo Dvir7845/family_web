@@ -1,4 +1,4 @@
-﻿# Family Tasks API
+# Family Home
 
 A shared family home board built with Spring Boot and a Hebrew, right-to-left browser interface. The application brings together household tasks, shopping, family events, member accounts and vehicle bookings.
 
@@ -9,9 +9,9 @@ This is a learning and portfolio project for a single family. The frontend is se
 - **Tasks:** shared visibility, assignment, search, day/status filters and completion by the assigned member. Administrators create, edit, reassign and delete tasks.
 - **Shopping:** all signed-in family members can add, update and remove products. The server tracks update times and automatically removes stale items.
 - **Family events:** shared events with dates, invitee selection, editing and automatic cleanup of old events. The interface displays Gregorian and Hebrew dates.
-- **Member management:** administrators create accounts, enable or revoke driver status, and delete other users after confirmation.
+- **Member management:** administrators create accounts, enable or revoke driver status, promote members to administrators, and delete other users after confirmation.
 - **Password changes:** each user can change their own password by supplying the current password. The user must sign in again afterward.
-- **Vehicles:** drivers can select a vehicle and month, see who booked each day, and reserve morning, afternoon or evening slots. Only administrators who are also drivers can add vehicles.
+- **Vehicles:** drivers can select a vehicle and month, see who booked each day, and reserve morning, afternoon or evening slots. Only administrators who are also drivers can add or delete vehicles. Deleting a vehicle also removes all its bookings.
 - **Mobile layout:** two-column navigation on phones, daily vehicle cards, stacked form fields, wrapping buttons and long text, and scrollable dialogs that fit narrow screens.
 
 ## Stack
@@ -39,12 +39,13 @@ The `ADMIN` / `MEMBER` role and the boolean `driver` flag are separate. Being an
 | Create member accounts | No | Yes |
 | Enable or revoke a user's driver status | No | Yes |
 | Delete another user | No | Yes |
+| Promote a member to administrator | No | Yes |
 | Delete own account | No | No |
 | View vehicles and monthly bookings | Drivers only | Drivers only |
 | Reserve a vehicle slot on own behalf | Drivers only | Drivers only |
 | Cancel own booking | Drivers only | Drivers only |
 | Cancel another user's booking | No | Drivers only |
-| Add a vehicle | No | Drivers only |
+| Add or delete a vehicle | No | Drivers only |
 
 New accounts always receive the `MEMBER` role. The `driver` flag defaults to `false` when omitted, including for existing accounts when the column is added. `/me` and `/members` expose driver status without returning passwords or password hashes.
 
@@ -52,7 +53,9 @@ New accounts always receive the `MEMBER` role. The `driver` flag defaults to `fa
 
 Prerequisites: JDK 25, PostgreSQL and PowerShell. Maven does not need to be installed separately. Node.js is optional and is only needed to run the standalone JavaScript test.
 
-Run the following commands from the directory containing `pom.xml`, `mvnw.cmd` and `start-server.ps1`.
+The Java base package is `com.familyhome` (Java package names cannot contain hyphens). The Maven artifact and application name are `family-home`.
+
+Open `family-home.code-workspace` from the project directory, or open the directory containing `pom.xml` directly in VS Code, so that the Maven project and Git repository are the workspace root. The physical project directory is currently named `rest-service`; it can be renamed to `family-home` once programs holding it open have been closed. Run the following commands from the directory containing `pom.xml`, `mvnw.cmd` and `start-server.ps1`.
 
 1. Create a PostgreSQL database named `family_tasks`.
 2. Review [application.properties](src/main/resources/application.properties). The local defaults use `localhost:5432`, database `family_tasks` and database user `postgres`.
@@ -97,7 +100,7 @@ The interface lives in [src/main/resources/static](src/main/resources/static). I
 
 ## Accounts and passwords
 
-Administrators can mark new users as drivers during account creation or change the flag for existing users. Usernames contain 3–30 English letters, digits or underscores. Created accounts use passwords of 8–72 characters, subject to BCrypt's 72-byte UTF-8 limit.
+Administrators can mark new users as drivers during account creation or change the flag for existing users. The family member management screen shows each user's role and offers **הפיכה למנהל** (promote to administrator) for members. Promotion requires confirmation and expires the promoted user's registered sessions after commit; they must sign in again to load their administrator permissions. Repeating promotion for an existing administrator has no effect. Driver status is unchanged. Usernames contain 3–30 English letters, digits or underscores. Created accounts use passwords of 8–72 characters, subject to BCrypt's 72-byte UTF-8 limit.
 
 Every user can open **שינוי סיסמה** (change password), enter the current password and confirm a new password. The new password must contain 8–72 characters and at most 72 UTF-8 bytes. Passwords are hashed with BCrypt. After a successful change, the current browser session is logged out and other registered sessions expire, requiring a new login.
 
@@ -114,6 +117,7 @@ Self-deletion is blocked. Session expiration is applied after the database trans
 
 - Vehicle access requires `driver=true`, including for administrators.
 - Only an administrator who is a driver can add a vehicle, using a name or identifying label of up to 100 characters.
+- The same permission is required to delete the selected vehicle. The interface asks for confirmation; deletion removes all bookings for that vehicle, including bookings outside the selected month, while preserving other vehicles and their bookings.
 - Each vehicle has three slots per date: `MORNING`, `AFTERNOON` and `EVENING`.
 - A database unique constraint prevents two bookings for the same vehicle, date and slot, including competing requests. A conflicting reservation returns HTTP `409`.
 - Reservations belong to the signed-in user; clients cannot choose another booking owner.
@@ -134,9 +138,10 @@ All business endpoints require authentication. The login page, frontend assets a
 | GET | `/csrf` | Obtain a CSRF token |
 | GET | `/me` | Current user's ID, username, role and driver flag |
 | PATCH | `/me/password` | Change own password using the current password |
-| GET | `/members` | List member IDs, usernames and driver flags; any signed-in user |
+| GET | `/members` | List member IDs, usernames, roles and driver flags; any signed-in user |
 | POST | `/members` | Create a `MEMBER` account; administrator only |
 | PATCH | `/members/{id}/driver` | Enable or revoke driver status; administrator only |
+| POST | `/members/{id}/promote` | Promote a member to administrator; administrator only |
 | DELETE | `/members/{id}` | Delete another user; administrator only |
 | GET | `/tasks` | Shared task board |
 | GET | `/tasks/{id}` | Task details |
@@ -158,6 +163,7 @@ All business endpoints require authentication. The login page, frontend assets a
 | POST | `/events/{eventId}/invite/{userId}` | Invite an existing user; any signed-in user |
 | GET | `/vehicles` | List vehicles; drivers only |
 | POST | `/vehicles` | Add a vehicle; administrator who is a driver only |
+| DELETE | `/vehicles/{id}` | Delete a vehicle and all its bookings; administrator who is a driver only |
 | GET | `/vehicles/bookings?month=YYYY-MM` | Bookings across vehicles for the selected month; drivers only |
 | POST | `/vehicles/bookings` | Reserve a slot for the signed-in driver |
 | DELETE | `/vehicles/bookings/{id}` | Cancel own booking, or another user's booking as an administrator who is a driver |
@@ -244,7 +250,7 @@ Run the Java test suite:
 
 The suite uses mocked repositories or isolated H2 databases. It does not require a running PostgreSQL server or real database credentials. Fixed passwords in test sources are disposable test fixtures only.
 
-Coverage includes authentication, CSRF, task assignment/completion permissions, shared shopping and events, cleanup rules, account creation/deletion, BCrypt storage, current-password validation, session expiration, driver access, monthly bookings, cancellation permissions and duplicate-slot rejection.
+Coverage includes authentication, CSRF, task assignment/completion permissions, shared shopping and events, cleanup rules, account creation/deletion, BCrypt storage, current-password validation, session expiration, driver access, monthly bookings, cancellation permissions, duplicate-slot rejection, vehicle deletion with booking cleanup, and administrator promotion with session expiration.
 
 With Node.js installed, run the standalone vehicle calendar UI test from the project directory:
 
@@ -254,7 +260,7 @@ node .\src\test\js\vehicle-calendar.test.cjs
 
 This test uses Node.js built-in modules and a simulated DOM to check leap-year February, free/booked slots and administrator controls. It does not render CSS.
 
-The latest implementation checks passed all **52 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
+The latest implementation checks passed all **56 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
 
 ## Build an executable JAR
 
@@ -262,12 +268,12 @@ The latest implementation checks passed all **52 Java tests** and the vehicle ca
 .\mvnw.cmd package
 ```
 
-The executable is written to `target/rest-service-0.0.1-SNAPSHOT.jar`. To run it directly, supply the PostgreSQL password in the same PowerShell process:
+The executable is written to `target/family-home-0.0.1-SNAPSHOT.jar`. To run it directly, supply the PostgreSQL password in the same PowerShell process:
 
 ```powershell
 $dbSecret = Read-Host "Enter PostgreSQL password" -AsSecureString
 $env:DB_PASSWORD = [System.Net.NetworkCredential]::new("", $dbSecret).Password
-java -jar .\target\rest-service-0.0.1-SNAPSHOT.jar
+java -jar .\target\family-home-0.0.1-SNAPSHOT.jar
 ```
 
 For a new database, also set `APP_LOGIN_PASSWORD` before the first startup as described above. Rebuild the JAR after source changes. Database contents and environment variables are not part of the JAR.
@@ -277,8 +283,8 @@ For a new database, also set `APP_LOGIN_PASSWORD` before the first startup as de
 ```text
 src/
 ├── main/
-│   ├── java/com/example/rest_service/
-│   │   ├── RestServiceApplication.java
+│   ├── java/com/familyhome/
+│   │   ├── FamilyHomeApplication.java
 │   │   ├── task/       # Shared tasks, assignment and completion
 │   │   ├── shopping/   # Shopping items and expiry cleanup
 │   │   ├── event/      # Events, invitees and daily cleanup

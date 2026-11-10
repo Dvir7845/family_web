@@ -774,14 +774,28 @@ function renderMembers() {
         await loadData(); renderMembers(); notify("המשתמש נמחק.");
       }
     ), true));
+    const role = textElement("span", "member-role", member.role === "ADMIN" ? "מנהל" : "בן / בת משפחה");
+    chip.append(role);
+    if (member.role !== "ADMIN" && member.id !== state.user.id) {
+      const promote = textElement("button", "button button-secondary promote-member", "הפיכה למנהל");
+      promote.type = "button";
+      promote.addEventListener("click", () => confirmDelete(
+        "להפוך את המשתמש למנהל?", member.username + " יקבל הרשאות לניהול המשפחה, המשימות והמשתמשים. יהיה עליו להתחבר מחדש.", async () => {
+          await api("/members/" + member.id + "/promote", "POST");
+          await loadData(); renderMembers(); notify("המשתמש קודם למנהל.");
+        }, "כן, להפוך למנהל"
+      ));
+      chip.append(promote);
+    }
     list.append(chip);
   });
 }
 
-function confirmDelete(title, description, action) {
+function confirmDelete(title, description, action, confirmLabel = "כן, למחוק") {
   resetForm($("#confirmForm"));
   $("#confirmTitle").textContent = title;
   $("#confirmDescription").textContent = description;
+  $("#confirmForm button[type=submit]").textContent = confirmLabel;
   state.pendingDelete = action;
   $("#confirmDialog").showModal();
 }
@@ -1002,6 +1016,7 @@ function renderVehicles() {
   state.vehicles.forEach(v => select.append(new Option(v.name, v.id)));
   if (!state.vehicles.some(v => String(v.id) === String(state.vehicleId))) state.vehicleId = String(state.vehicles[0]?.id || "");
   select.value = state.vehicleId;
+  $("#deleteVehicle").hidden = !isAdmin() || !state.vehicleId;
   $("#vehicleEmpty").hidden = state.vehicles.length > 0;
   const calendar = $("#vehicleCalendar"); calendar.replaceChildren();
   const bookings = state.bookings.filter(b => String(b.vehicleId) === state.vehicleId);
@@ -1039,6 +1054,15 @@ function renderVehicles() {
     calendar.append(cell);
   }
 }
+$("#deleteVehicle").addEventListener("click", () => {
+  if (!isAdmin() || !state.user?.driver) return;
+  const vehicle = state.vehicles.find(v => String(v.id) === String(state.vehicleId));
+  if (!vehicle) return;
+  confirmDelete("למחוק את הרכב?", "הרכב ״" + vehicle.name + "״ וכל ההזמנות שלו יימחקו. לא ניתן לבטל את המחיקה.", async () => {
+    await api("/vehicles/" + vehicle.id, "DELETE");
+    notify("הרכב וההזמנות שלו נמחקו.");
+  });
+});
 $("#vehicleSelect").addEventListener("change", event => { state.vehicleId = event.target.value; render(); });
 $("#vehicleMonth").addEventListener("change", async event => {
   if (state.loading) {
