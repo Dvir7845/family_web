@@ -84,6 +84,12 @@
           </svg></span>
       </article>
     </section>
+    <section id="weeklyTaskPanel" class="weekly-task-panel" aria-labelledby="weeklyTaskTitle" hidden>
+      <div class="weekly-task-heading"><div><span class="eyebrow">כל משימה קטנה עושה הבדל</span><h2 id="weeklyTaskTitle">אלופי השבוע בבית</h2><p id="weeklyTaskDates" class="muted"></p></div><span class="weekly-total" id="weeklyTaskTotal"></span></div>
+      <p id="weeklyTaskMessage" class="weekly-task-message" role="status"></p>
+      <div class="weekly-chart-scroll" tabindex="0" role="region" aria-label="גרף עמודות: משימות שהושלמו השבוע לכל בן משפחה"><ul id="weeklyTaskChart" class="weekly-task-chart"></ul></div>
+      <p class="weekly-task-note">ראשון עד שבת · לפי שעון ישראל · גביע לכל המובילים בשוויון</p>
+    </section>
     <p id="pageError" class="notice" role="alert" hidden></p>
     <section class="board" aria-labelledby="boardTitle">
       <div class="board-heading">

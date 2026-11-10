@@ -12,10 +12,15 @@ import jakarta.validation.Valid;
 public class TaskController {
 
     private final TaskService taskService;
+    private final TaskStatisticsService statistics;
 
-    public TaskController(TaskService taskService) {
+    public TaskController(TaskService taskService, TaskStatisticsService statistics) {
         this.taskService = taskService;
+        this.statistics = statistics;
     }
+
+    @GetMapping("/tasks/statistics/weekly")
+    public TaskStatisticsService.WeeklyStatistics weeklyStatistics() { return statistics.weekly(); }
 
     @GetMapping("/tasks")
     public List<Task> getTasks() {

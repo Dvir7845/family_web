@@ -260,7 +260,7 @@ node .\src\test\js\vehicle-calendar.test.cjs
 
 This test uses Node.js built-in modules and a simulated DOM to check leap-year February, free/booked slots and administrator controls. It does not render CSS.
 
-The latest implementation checks passed all **56 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
+The latest implementation checks passed all **61 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
 
 ## Build an executable JAR
 
@@ -309,3 +309,9 @@ src/
 - Keep the single-family scope explicit; multiple families would require membership and data isolation.
 
 Do not commit real passwords, tokens, environment files or database backups. Build output, local preview files under `target/` and runtime logs are excluded through `.gitignore`.
+
+## Weekly task leaderboard
+
+The task tab shows a weekly bar chart for every current family member, including zero counts. Gold bars and a trophy mark every member tied for the highest positive count. Weeks run Sunday through Saturday in Asia/Jerusalem. `GET /tasks/statistics/weekly` requires authentication and returns `weekStart`, `weekEnd` and member counts.
+
+Completion now stores `completedAt` and `completedByUsername` on the task. Repeated completion preserves the first timestamp and performer; reassignment does not transfer credit. Existing completed tasks without a recorded completion date are excluded. Counts use tasks still present in the database; deleting a task removes it from these statistics, and deleted accounts are not listed. Hibernate adds the new nullable columns on startup with the existing development schema configuration.

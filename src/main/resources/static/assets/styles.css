@@ -1863,3 +1863,29 @@ input, select, textarea { min-width: 0; max-width: 100%; }
   .member-chip .member-role { grid-column: 2; }
   .member-chip .promote-member { grid-column: 1 / -1; min-height: 44px; }
 }
+
+.weekly-task-panel { margin-bottom: 28px; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(135deg,#fffefa,#f0f5ee); min-width: 0; }
+.weekly-task-heading { display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center; }
+.weekly-task-heading > div { min-width:0; }
+.weekly-task-heading .eyebrow { margin-bottom:4px; }
+#weeklyTaskDates { font-size:12px; margin-top:5px; }
+.weekly-total { padding:8px 13px; border-radius:24px; background:#e4ede3; color:var(--green); font-size:12px; font-weight:600; }
+.weekly-task-message { font-size:13px; color:var(--muted); margin:16px 0 0; }
+.weekly-chart-scroll { overflow-x:auto; max-width:100%; padding:12px 2px; }
+.weekly-task-chart { display:flex; justify-content:safe center; align-items:flex-start; gap:16px; padding:8px 0 0; margin:0; list-style:none; }
+.weekly-column { flex:1 0 76px; max-width:110px; min-width:0; text-align:center; display:flex; flex-direction:column; align-items:center; gap:9px; }
+.weekly-column-value { display:flex; align-items:center; justify-content:center; gap:5px; min-height:32px; font-size:22px; font-weight:700; }
+.weekly-trophy { font-size:23px; }
+.weekly-bar-track { height:150px; width:100%; display:flex; align-items:flex-end; justify-content:center; border-bottom:1px solid #cedbce; background:repeating-linear-gradient(to top,transparent 0,transparent 36px,#dce5db 37px,transparent 38px); }
+.weekly-bar { width:60%; border-radius:10px 10px 0 0; background:linear-gradient(to top,#315e52,#91b5a0); min-height:3px; }
+.weekly-leader .weekly-bar { background:linear-gradient(to top,#ba8736,#ebca77); box-shadow:0 0 22px #d9b65525; }
+.weekly-zero { background:#dce4d9; }
+.weekly-column-name { overflow-wrap:anywhere; font-size:12px; line-height:1.4; min-height:34px; width:100%; }
+.weekly-task-note { font-size:11px; color:var(--muted); margin-top:12px; }
+@media (max-width:580px) {
+ .weekly-task-panel { padding:18px 14px; }
+ .weekly-task-heading h2 { font-size:20px; }
+ .weekly-task-chart { gap:10px; }
+ .weekly-column { flex-basis:68px; }
+ .weekly-bar-track { height:120px; }
+}

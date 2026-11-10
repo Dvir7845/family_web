@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
+    List<Task> findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(java.time.Instant start, java.time.Instant end);
+
     List<Task> findAllByOwnerId(Long ownerId);
 
     Optional<Task> findByIdAndOwnerId(Long id, Long ownerId);

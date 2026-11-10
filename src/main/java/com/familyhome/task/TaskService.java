@@ -100,7 +100,7 @@ public class TaskService {
                         HttpStatus.NOT_FOUND,
                         "Task not found among your assignments"));
 
-        task.markCompleted();
+        task.markCompleted(java.time.Instant.now(), user.getUsername());
 
         return taskRepository.save(task);
     }

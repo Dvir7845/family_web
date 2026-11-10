@@ -6,6 +6,7 @@ const state = {
     ? location.hash.slice(1)
     : "tasks",
   user: null,
+  weeklyStats: null,
   vehicles: [], bookings: [], vehicleId: "",
   vehicleMonth: new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit" }).format(new Date()),
   tasks: [],
@@ -177,11 +178,12 @@ async function loadData(initial = false) {
   }
   try {
     const user = await api("/me");
-    const [tasks, shopping, assignees, events] = await Promise.all([
+    const [tasks, shopping, assignees, events, weeklyStats] = await Promise.all([
       api("/tasks"),
       api("/shopping-items"),
       api("/members"),
-      api("/events")
+      api("/events"),
+      api("/tasks/statistics/weekly")
     ]);
     state.user = user;
     $("#vehicleNavigation").hidden = !user.driver;
@@ -189,6 +191,7 @@ async function loadData(initial = false) {
     if (user.driver) {
       [state.vehicles, state.bookings] = await Promise.all([api("/vehicles"), api(`/vehicles/bookings?month=${state.vehicleMonth}`)]);
     } else { state.vehicles = []; state.bookings = []; }
+    state.weeklyStats = weeklyStats;
     state.tasks = tasks;
     state.shopping = shopping;
     state.assignees = assignees;
@@ -227,6 +230,8 @@ function setView(view) {
 }
 
 function render() {
+  $("#weeklyTaskPanel").hidden = state.view !== "tasks" || !state.loaded;
+  if (state.view === "tasks" && state.loaded) renderWeeklyTasks();
   const vehicles = state.view === "vehicles" && state.user?.driver;
   $("#vehicleBoard").hidden = !vehicles;
   $(".board-toolbar").hidden = vehicles;
@@ -1084,3 +1089,29 @@ handleForm($("#vehicleForm"), async () => {
   await api("/vehicles", "POST", { name: $("#vehicleName").value.trim() });
   $("#vehicleDialog").close(); await loadData(); notify("הרכב נוסף.");
 });
+
+function renderWeeklyTasks() {
+  const data = state.weeklyStats;
+  const chart = $("#weeklyTaskChart"); chart.replaceChildren();
+  if (!data) return;
+  const members = [...data.members].sort((a, b) => b.completedCount - a.completedCount || a.username.localeCompare(b.username, "he"));
+  const maximum = Math.max(0, ...members.map(m => m.completedCount));
+  const total = members.reduce((sum, m) => sum + m.completedCount, 0);
+  const date = value => new Intl.DateTimeFormat("he-IL", {day:"numeric", month:"long", timeZone:"UTC"}).format(new Date(value + "T12:00:00Z"));
+  $("#weeklyTaskDates").textContent = date(data.weekStart) + " – " + date(data.weekEnd);
+  $("#weeklyTaskTotal").textContent = total + " משימות הושלמו ביחד";
+  $("#weeklyTaskMessage").textContent = total ? "כל הכבוד על העשייה המשותפת!" : "השבוע רק מתחיל — המשימה הבאה יכולה להיות שלך.";
+  for (const member of members) {
+    const leader = maximum > 0 && member.completedCount === maximum;
+    const column = textElement("li", "weekly-column" + (leader ? " weekly-leader" : ""), "");
+    column.setAttribute("aria-label", member.username + ": " + member.completedCount + " משימות הושלמו השבוע" + (leader ? ", מקום ראשון" : ""));
+    const value = textElement("span", "weekly-column-value", String(member.completedCount));
+    if (leader) { const trophy = textElement("span", "weekly-trophy", "🏆"); trophy.setAttribute("aria-hidden", "true"); value.prepend(trophy); }
+    const track = textElement("div", "weekly-bar-track", ""); track.setAttribute("aria-hidden", "true");
+    const bar = textElement("div", "weekly-bar" + (member.completedCount ? "" : " weekly-zero"), "");
+    bar.style.height = (maximum ? member.completedCount / maximum * 100 : 0) + "%";
+    track.append(bar);
+    column.append(value, track, avatar(member.username), textElement("span", "weekly-column-name", member.username));
+    chart.append(column);
+  }
+}

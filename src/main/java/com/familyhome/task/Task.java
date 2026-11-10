@@ -32,6 +32,12 @@ public class Task {
     @Column(nullable = false)
     private boolean completed = false;
 
+    private java.time.Instant completedAt;
+    private String completedByUsername;
+
+    public java.time.Instant getCompletedAt() { return completedAt; }
+    public String getCompletedByUsername() { return completedByUsername; }
+
     protected Task() {
     }
 
@@ -75,7 +81,14 @@ public class Task {
     }
 
     public void markCompleted() {
+        markCompleted(java.time.Instant.now(), owner == null ? null : owner.getUsername());
+    }
+
+    public void markCompleted(java.time.Instant at, String username) {
+        if (completed) return;
         this.completed = true;
+        this.completedAt = at;
+        this.completedByUsername = username;
     }
 
     public String getAssigneeUsername() {
