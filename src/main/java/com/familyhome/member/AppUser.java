@@ -30,8 +30,14 @@ public class AppUser {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean driver;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean taskManager;
+
     public boolean isDriver() { return driver; }
     public void changeDriver(boolean driver) { this.driver = driver; }
+
+    public boolean isTaskManager() { return taskManager; }
+    public void changeTaskManager(boolean taskManager) { this.taskManager = taskManager; }
 
     protected AppUser() {
     }

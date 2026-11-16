@@ -55,7 +55,7 @@ public class TaskService {
 
     @Transactional
     public BaseTask createTask(TaskRequest request) {
-        requireAdmin();
+        requireTaskManager();
         validateRequest(request);
 
         AppUser user = findAssignee(request.assigneeId());
@@ -77,7 +77,7 @@ public class TaskService {
 
     @Transactional
     public BaseTask updateTask(long id, TaskRequest request) {
-        requireAdmin();
+        requireTaskManager();
         validateRequest(request);
         BaseTask task = getTaskById(id);
         AppUser user = findAssignee(request.assigneeId());
@@ -95,7 +95,7 @@ public class TaskService {
 
     @Transactional
     public void deleteTask(long id) {
-        requireAdmin();
+        requireTaskManager();
         BaseTask task = getTaskById(id);
         taskRepository.delete(task);
     }
@@ -114,13 +114,13 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    private AppUser requireAdmin() {
+    private AppUser requireTaskManager() {
         AppUser user = getCurrentUser();
 
-        if (user.getRole() != Role.ADMIN) {
+        if (user.getRole() != Role.ADMIN && !user.isTaskManager()) {
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
-                    "Only an admin can manage tasks");
+                    "Only an admin or task manager can manage tasks");
         }
 
         return user;
@@ -135,7 +135,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<AssigneeOption> getAssignees() {
-        requireAdmin();
+        requireTaskManager();
 
         return userRepository.findAll()
                 .stream()

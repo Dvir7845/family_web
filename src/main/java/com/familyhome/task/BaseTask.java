@@ -104,8 +104,6 @@ public abstract class BaseTask {
         this.owner = owner;
     }
 
-    
-
     public void markAsCompleted(String completedByUsername) {
         if (this.completed) return; 
         this.completed = true;
@@ -113,6 +111,8 @@ public abstract class BaseTask {
         this.completedByUsername = completedByUsername;
     }
 
+    public boolean shouldDeleteOnDailyCleanup() { return false; }
+    public void resetWeeklyStatus() {}
     
 
 }

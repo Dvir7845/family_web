@@ -22,19 +22,18 @@ public class TaskMaintenanceService {
     @Transactional
     @Scheduled (cron = "0 0 0 * * ?", zone = "Asia/Jerusalem") // Every day at midnight 
     public void deleteAllCompletedOneTimeTasks() {
-        taskRepository.deleteAll(taskRepository.findAll().stream()
-            .filter(task -> task instanceof OneTimeTask && task.isCompleted())
-            .toList());
+        for (BaseTask task : taskRepository.findAll()) {
+            if (task.shouldDeleteOnDailyCleanup()) {
+                taskRepository.delete(task);
+            }
+        }
     }
+    
     @Transactional
     @Scheduled(cron = "0 0 0 * * SUN" , zone = "Asia/Jerusalem")  // Every Sunday at midnight
     public void resetWeeklyTaskCompletionStatus() {
         for (BaseTask task : taskRepository.findAll()) {
-            if (task instanceof RecurringTask) {
-                task.setCompleted(false);
-                task.setCompletedAt(null);
-                task.setCompletedByUsername(null);
-            }
+            task.resetWeeklyStatus();
         }
     }
 }

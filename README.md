@@ -6,7 +6,7 @@ This is a learning and portfolio project for a single family. The frontend is se
 
 ## Features
 
-- **Tasks:** shared visibility, assignment, search, day/status filters and completion by the assigned member. Administrators create, edit, reassign and delete tasks.
+- **Tasks:** shared visibility, assignment, search, type/day/status filters and completion by the assigned member. Supports both **one-time tasks** (with a specific date and overdue indicator) and **weekly recurring tasks** (with a fixed day of the week). Administrators and designated task managers create, edit, reassign and delete tasks.
 - **Shopping:** all signed-in family members can add, update and remove products. The server tracks update times and automatically removes stale items.
 - **Family events:** shared events with dates, invitee selection, editing and automatic cleanup of old events. The interface displays Gregorian and Hebrew dates.
 - **Member management:** administrators create accounts, enable or revoke driver status, promote members to administrators, and delete other users after confirmation.
@@ -27,27 +27,27 @@ This is a learning and portfolio project for a single family. The frontend is se
 
 ## Permissions
 
-The `ADMIN` / `MEMBER` role and the boolean `driver` flag are separate. Being an administrator does not automatically grant access to vehicles. These rules are enforced by the server as well as the interface.
+The `ADMIN` / `MEMBER` role and the boolean `driver` and `taskManager` flags are separate. Being an administrator does not automatically grant access to vehicles, and task management can be delegated to members via `taskManager=true` without granting full administrator privileges. These rules are enforced by the server as well as the interface.
 
-| Action | Member | Administrator |
-| --- | --- | --- |
-| View shared tasks and list family members | Yes | Yes |
-| Complete a task assigned to the current user | Yes | Yes |
-| Create, edit, reassign or delete tasks | No | Yes |
-| Manage shared shopping items and family events | Yes | Yes |
-| Change own password using the current password | Yes | Yes |
-| Create member accounts | No | Yes |
-| Enable or revoke a user's driver status | No | Yes |
-| Delete another user | No | Yes |
-| Promote a member to administrator | No | Yes |
-| Delete own account | No | No |
-| View vehicles and monthly bookings | Drivers only | Drivers only |
-| Reserve a vehicle slot on own behalf | Drivers only | Drivers only |
-| Cancel own booking | Drivers only | Drivers only |
-| Cancel another user's booking | No | Drivers only |
-| Add or delete a vehicle | No | Drivers only |
+| Action | Member | Task Manager | Administrator |
+| --- | --- | --- | --- |
+| View shared tasks and list family members | Yes | Yes | Yes |
+| Complete a task assigned to the current user | Yes | Yes | Yes |
+| Create, edit, reassign or delete tasks | No | Yes | Yes |
+| Manage shared shopping items and family events | Yes | Yes | Yes |
+| Change own password using the current password | Yes | Yes | Yes |
+| Create member accounts | No | No | Yes |
+| Enable or revoke a user's `driver` or `taskManager` status | No | No | Yes |
+| Delete another user | No | No | Yes |
+| Promote a member to administrator | No | No | Yes |
+| Delete own account | No | No | No |
+| View vehicles and monthly bookings | Drivers only | Drivers only | Drivers only |
+| Reserve a vehicle slot on own behalf | Drivers only | Drivers only | Drivers only |
+| Cancel own booking | Drivers only | Drivers only | Drivers only |
+| Cancel another user's booking | No | No | Drivers only |
+| Add or delete a vehicle | No | No | Drivers only |
 
-New accounts always receive the `MEMBER` role. The `driver` flag defaults to `false` when omitted, including for existing accounts when the column is added. `/me` and `/members` expose driver status without returning passwords or password hashes.
+New accounts always receive the `MEMBER` role. Both `driver` and `taskManager` flags default to `false` when omitted, including for existing accounts when the columns are added. `/me` and `/members` expose `driver` and `taskManager` status without returning passwords or password hashes.
 
 ## Run locally on Windows
 
@@ -126,6 +126,9 @@ Self-deletion is blocked. Session expiration is applied after the database trans
 
 ## Automatic cleanup
 
+- **Tasks:**
+  - **One-time tasks:** a daily job at midnight in `Asia/Jerusalem` removes completed `ONETIME` tasks. Open one-time tasks remain on the board until completed.
+  - **Weekly tasks:** a weekly job on Sunday at midnight in `Asia/Jerusalem` resets the completion status (`completed`, `completedAt`, `completedByUsername`) of all `WEEKLY` tasks for the new week.
 - **Shopping:** the server sets `updatedAt` on creation and update. Items not updated for at least seven days are removed when the scheduled job first runs after startup, then with a 24-hour delay between runs. Viewing a list does not refresh update times.
 - **Events:** a daily job at midnight in `Asia/Jerusalem` removes events dated more than 30 days before today. Events exactly 30 days old remain until a later run.
 
@@ -136,19 +139,20 @@ All business endpoints require authentication. The login page, frontend assets a
 | Method | Path | Purpose / permission |
 | --- | --- | --- |
 | GET | `/csrf` | Obtain a CSRF token |
-| GET | `/me` | Current user's ID, username, role and driver flag |
+| GET | `/me` | Current user's ID, username, role, `driver` and `taskManager` flags |
 | PATCH | `/me/password` | Change own password using the current password |
-| GET | `/members` | List member IDs, usernames, roles and driver flags; any signed-in user |
+| GET | `/members` | List member IDs, usernames, roles, `driver` and `taskManager` flags; any signed-in user |
 | POST | `/members` | Create a `MEMBER` account; administrator only |
 | PATCH | `/members/{id}/driver` | Enable or revoke driver status; administrator only |
+| PATCH | `/members/{id}/task-manager` | Enable or revoke task manager status; administrator only |
 | POST | `/members/{id}/promote` | Promote a member to administrator; administrator only |
 | DELETE | `/members/{id}` | Delete another user; administrator only |
 | GET | `/tasks` | Shared task board |
 | GET | `/tasks/{id}` | Task details |
-| GET | `/tasks/assignees` | Available assignees; administrator only |
-| POST | `/tasks` | Create and assign a task; administrator only |
-| PUT | `/tasks/{id}` | Update task details and assignee; administrator only |
-| DELETE | `/tasks/{id}` | Delete a task; administrator only |
+| GET | `/tasks/assignees` | Available assignees; administrator or task manager only |
+| POST | `/tasks` | Create and assign a `ONETIME` or `WEEKLY` task; administrator or task manager only |
+| PUT | `/tasks/{id}` | Update task details, schedule and assignee (task type cannot change); administrator or task manager only |
+| DELETE | `/tasks/{id}` | Delete a task; administrator or task manager only |
 | PATCH | `/tasks/{id}/complete` | Complete a task assigned to the current user |
 | GET | `/shopping-items` | Shared shopping list |
 | GET | `/shopping-items/{id}` | Shopping item details |
@@ -178,7 +182,8 @@ Create a member (`POST /members`):
 {
   "username": "family_member",
   "password": "ExampleOnly123!",
-  "driver": true
+  "driver": true,
+  "taskManager": false
 }
 ```
 
@@ -187,6 +192,14 @@ Enable driver access (`PATCH /members/{id}/driver`):
 ```json
 {
   "driver": true
+}
+```
+
+Enable task manager access (`PATCH /members/{id}/task-manager`):
+
+```json
+{
+  "taskManager": true
 }
 ```
 
@@ -199,18 +212,31 @@ Change own password (`PATCH /me/password`):
 }
 ```
 
-Create a task (`POST /tasks`):
+Create a weekly task (`POST /tasks`):
 
 ```json
 {
   "name": "Shopping",
-  "day": "Sunday",
+  "type": "WEEKLY",
+  "day": "SUNDAY",
   "description": "Buy milk and bread",
   "assigneeId": 2
 }
 ```
 
-The internal task field `owner` represents the assigned member. It does not restrict who can view the task.
+Create a one-time task (`POST /tasks`):
+
+```json
+{
+  "name": "Fix sink",
+  "type": "ONETIME",
+  "taskDate": "2099-12-10",
+  "description": "Call plumber",
+  "assigneeId": 2
+}
+```
+
+The internal task field `owner` is omitted from JSON (`@JsonIgnore`); responses expose `assigneeId` and `assigneeUsername` instead. It does not restrict who can view the task.
 
 Create an event (`POST /events`):
 

@@ -34,12 +34,6 @@ public class MemberService {
                     "Password exceeds the supported byte length");
         }
 
-        if (userRepository.findByUsername(request.username()).isPresent()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Username already exists");
-        }
-
         AppUser user = new AppUser(
                 request.username(),
                 passwordEncoder.encode(request.password()));
@@ -55,7 +49,17 @@ public class MemberService {
                     "Could not create member: conflicting account data");
         }
 
-        return new AssigneeOption(user.getId(), user.getUsername(), user.isDriver());
+        return new AssigneeOption(user.getId(), user.getUsername(), user.isDriver(), user.isTaskManager());
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public void changeTaskManager(Long userId, Boolean taskManager) {
+        AppUser user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"));
+        user.changeTaskManager(taskManager);
     }
 
     @Transactional(readOnly = true)
@@ -68,14 +72,14 @@ public class MemberService {
         return new CurrentMemberResponse(
                 user.getId(),
                 user.getUsername(),
-                user.getRole(), user.isDriver());
+                user.getRole(), user.isDriver(), user.isTaskManager());
     }
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void changeDriver(Long id, boolean driver) {
-        AppUser user = userRepository.findById(id).orElseThrow(() ->
-            new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         user.changeDriver(driver);
     }
 
@@ -85,7 +89,10 @@ public class MemberService {
                 .stream()
                 .map(user -> new AssigneeOption(
                         user.getId(),
-                        user.getUsername(), user.isDriver(), user.getRole()))
+                        user.getUsername(),
+                        user.isDriver(),
+                        user.isTaskManager(),
+                        user.getRole()))
                 .toList();
     }
 }

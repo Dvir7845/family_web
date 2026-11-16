@@ -29,7 +29,9 @@ class TaskMaintenanceServiceTest {
 
         maintenanceService.deleteAllCompletedOneTimeTasks();
 
-        verify(taskRepository).deleteAll(List.of(completedOneTime));
+        verify(taskRepository).delete(completedOneTime);
+        verify(taskRepository, never()).delete(openOneTime);
+        verify(taskRepository, never()).delete(completedRecurring);
     }
 
     @Test

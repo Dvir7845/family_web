@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PatchMapping;
+
 
 @RestController
 public class MemberController {
@@ -28,12 +32,20 @@ public class MemberController {
     }
 
     public record DriverRequest(@jakarta.validation.constraints.NotNull Boolean driver) {}
+    public record TaskManagerRequest(@jakarta.validation.constraints.NotNull Boolean taskManager) {}
 
     @PatchMapping("/members/{id}/driver")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeDriver(@PathVariable Long id, @Valid @RequestBody DriverRequest request) {
         memberService.changeDriver(id, request.driver());
     }
+
+    @PatchMapping("/members/{id}/task-manager")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeTaskManager(@PathVariable Long id, @Valid @RequestBody TaskManagerRequest request) {
+        memberService.changeTaskManager(id, request.taskManager());
+    }
+    
 
     @PostMapping("/members/{id}/promote")
     @ResponseStatus(HttpStatus.NO_CONTENT)

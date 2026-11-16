@@ -42,6 +42,10 @@ function isAdmin() {
   return state.user?.role === "ADMIN";
 }
 
+function canManageTasks() {
+  return isAdmin() || Boolean(state.user?.taskManager);
+}
+
 function errorMessage(status, data) {
   const translations = {
     "Current password is incorrect": "הסיסמה הנוכחית אינה נכונה.",
@@ -261,7 +265,7 @@ async function loadData(initial = false) {
     state.events = events;
     state.loaded = true;
     $("#currentUsername").textContent = user.username;
-    $("#currentRole").textContent = isAdmin() ? "מנהל המשימות" : "בן / בת משפחה";
+    $("#currentRole").textContent = isAdmin() ? "מנהל" : canManageTasks() ? "אחראי משימות" : "בן / בת משפחה";
     $("#userAvatar").replaceWith(Object.assign(avatar(user.username), { id: "userAvatar" }));
     $("#adminNavigation").hidden = !isAdmin();
     $("#navTaskCount").textContent = tasks.filter(task => !task.completed).length;
@@ -343,7 +347,7 @@ function render() {
     : shopping ? "מה צריך לקנות?" : "מה צריך לעשות?";
 
   $("#primaryAction").hidden =
-    !state.loaded || (tasks && !isAdmin());
+    !state.loaded || (tasks && !canManageTasks());
 
   $("#primaryAction span").textContent = actionLabel;
 
@@ -499,10 +503,10 @@ function renderTasks() {
         await loadData();
       }));
       actions.append(complete);
-    } else if (task.completed && !isAdmin()) {
+    } else if (task.completed && !canManageTasks()) {
       actions.append(textElement("span", "completed-note", "בוצע"));
     }
-    if (isAdmin()) {
+    if (canManageTasks()) {
       actions.append(actionButton("edit", "עריכת המשימה " + task.name, () => openTask(task)));
       actions.append(actionButton("trash", "מחיקת המשימה " + task.name, () => confirmDelete(
         weekly ? "למחוק את המשימה השבועית?" : "למחוק את המשימה?",
@@ -706,7 +710,7 @@ function showTableOrEmpty(count, filtered) {
 
   const shopping = state.view === "shopping";
   const events = state.view === "events";
-  const canCreate = shopping || events || isAdmin();
+  const canCreate = shopping || events || canManageTasks();
 
   const glyph = events ? "clock" : shopping ? "shopping" : "tasks";
 
@@ -729,7 +733,7 @@ function showTableOrEmpty(count, filtered) {
       ? "מתכננים מפגש? הוסיפו אירוע ובחרו את המוזמנים."
       : shopping
         ? "חסר משהו בבית? הוסיפו אותו לרשימה."
-        : isAdmin()
+        : canManageTasks()
           ? "הוסיפו משימה ובחרו מי אחראי עליה."
           : "כשהמנהל יוסיף משימות, הן יופיעו כאן.";
 
@@ -772,7 +776,7 @@ function resetForm(form) {
 }
 
 function openTask(task) {
-  if (!isAdmin()) return;
+  if (!canManageTasks()) return;
   const form = $("#taskForm");
   resetForm(form);
   form.elements.namedItem("id").value = task?.id || "";
@@ -865,6 +869,14 @@ function renderMembers() {
       finally { await loadData(); renderMembers(); }
     }));
     label.append(checkbox, "נהג / נהגת"); chip.append(label);
+    const tmLabel = document.createElement("label"); tmLabel.className = "driver-option";
+    const tmCheckbox = document.createElement("input"); tmCheckbox.type = "checkbox"; tmCheckbox.checked = Boolean(member.taskManager);
+    tmCheckbox.setAttribute("aria-label", "אחראי משימות: " + member.username);
+    tmCheckbox.addEventListener("change", () => runButtonAction(tmCheckbox, async () => {
+      try { await api("/members/" + member.id + "/task-manager", "PATCH", { taskManager: tmCheckbox.checked }); }
+      finally { await loadData(); renderMembers(); }
+    }));
+    tmLabel.append(tmCheckbox, "אחראי / אחראית משימות"); chip.append(tmLabel);
     if (member.id !== state.user.id) chip.append(actionButton("trash", "מחיקת המשתמש " + member.username, () => confirmDelete(
       "למחוק את המשתמש?", "החשבון של " + member.username + " יימחק. הזמנות הרכב שלו יבוטלו והמשימות יישארו ללא אחראי. לא ניתן לבטל את המחיקה.", async () => {
         await api("/members/" + member.id, "DELETE");
@@ -1011,7 +1023,7 @@ handleForm($("#memberForm"), async form => {
   const username = $("#memberUsername").value.trim();
   const password = $("#memberPassword").value;
   if (new TextEncoder().encode(password).length > 72) throw new Error("הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר.");
-  await api("/members", "POST", { username, password, driver: $("#memberDriver").checked });
+  await api("/members", "POST", { username, password, driver: $("#memberDriver").checked, taskManager: $("#memberTaskManager").checked });
   form.reset();
   await loadData();
   renderMembers();

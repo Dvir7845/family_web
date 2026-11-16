@@ -35,6 +35,13 @@ public class RecurringTask extends BaseTask {
         super.updateDetails(name, description);
         this.day = day;
     }
+    
+    @Override
+    public void resetWeeklyStatus() {
+        super.setCompleted(false);
+        super.setCompletedAt(null);
+        super.setCompletedByUsername(null);
+    }
 
 
 }

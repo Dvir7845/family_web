@@ -4,5 +4,6 @@ public record CurrentMemberResponse(
     Long id,
     String username,
     Role role,
-    boolean driver
+    boolean driver,
+    boolean taskManager
 ) {}

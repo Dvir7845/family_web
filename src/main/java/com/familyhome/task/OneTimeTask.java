@@ -36,4 +36,9 @@ public class OneTimeTask extends BaseTask {
         super.updateDetails(name, description);
         this.taskDate = taskDate;
     }
+
+    @Override
+    public boolean shouldDeleteOnDailyCleanup() {
+        return isCompleted() || taskDate.isBefore(java.time.LocalDate.now()); //
+    }
 }
