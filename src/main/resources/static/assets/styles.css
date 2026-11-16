@@ -1889,3 +1889,15 @@ input, select, textarea { min-width: 0; max-width: 100%; }
  .weekly-column { flex-basis:68px; }
  .weekly-bar-track { height:120px; }
 }
+
+/* Task types and due dates share the existing table and mobile card layout. */
+.task-kind { display: inline-flex; width: fit-content; margin-top: 5px; padding: 3px 8px; border-radius: 12px; background: #eeeaf5; color: #615276; font-size: 11px; }
+.task-kind.recurring { background: #e8f1e7; color: #3d6551; }
+.task-due-date { display: block; white-space: nowrap; }
+.task-overdue { display: block; margin-top: 5px; color: #a34b35; font-size: 11px; font-weight: 600; }
+#taskType:disabled { opacity: 1; color: var(--muted); background: #f3f5f0; cursor: default; }
+#taskTypeFilter { max-width: 150px; }
+#taskDialog .form-grid { align-items: start; }
+@media (max-width: 580px) {
+  #taskTypeFilter { max-width: none; }
+}

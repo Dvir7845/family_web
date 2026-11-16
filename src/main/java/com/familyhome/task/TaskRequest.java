@@ -4,12 +4,20 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import java.time.LocalDate;
+import java.time.DayOfWeek;
+
+
 public record TaskRequest(
-        @NotBlank(message = "Task name is required") String name,
-
-        @NotBlank(message = "Day is required") String day,
-
+        @NotBlank String name,
         String description,
 
-        @NotNull(message = "Assignee is required") @Positive(message = "Assignee ID must be positive") Long assigneeId) {
-}
+        @NotNull @Positive Long assigneeId,
+
+        @NotNull TaskType type,
+
+        LocalDate taskDate,
+
+        DayOfWeek day
+) {}
+

@@ -94,7 +94,7 @@
     <section class="board" aria-labelledby="boardTitle">
       <div class="board-heading">
         <div>
-          <h2 id="boardTitle">מה עושים השבוע?</h2><span id="boardCount" class="muted">טוענים את הרשימה…</span>
+          <h2 id="boardTitle">מה צריך לעשות?</h2><span id="boardCount" class="muted">טוענים את הרשימה…</span>
         </div><button id="refreshButton" class="button button-quiet" type="button"><svg class="icon">
             <use href="/assets/icons.svg#refresh"></use>
           </svg><span>רענון</span></button>
@@ -108,7 +108,11 @@
         <div class="search-controls"><label class="search-field"><svg class="icon">
               <use href="/assets/icons.svg#search"></use>
             </svg><input id="searchInput" type="search" aria-label="חיפוש ברשימה"
-              placeholder="חיפוש משימה או אחראי…"></label><select id="dayFilter" aria-label="סינון לפי יום">
+              placeholder="חיפוש משימה או אחראי…"></label><select id="taskTypeFilter" aria-label="סינון לפי סוג משימה">
+            <option value="all">כל הסוגים</option>
+            <option value="ONETIME">חד־פעמיות</option>
+            <option value="WEEKLY">שבועיות</option>
+          </select><select id="dayFilter" aria-label="סינון לפי יום">
             <option value="all">כל הימים</option>
             <option value="0">ראשון</option>
             <option value="1">שני</option>
@@ -150,31 +154,48 @@
   <dialog id="taskDialog" class="form-dialog" aria-labelledby="taskDialogTitle">
     <form id="taskForm" method="post" action="/tasks">
       <div class="dialog-header">
-        <div><span class="eyebrow">משימות הבית</span>
-          <h2 id="taskDialogTitle">משימה חדשה</h2>
-        </div><button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon">
-            <use href="/assets/icons.svg#close"></use>
-          </svg></button>
-      </div><input name="id" type="hidden"><label for="taskName">מה צריך לעשות?</label><input id="taskName" name="name"
-        maxlength="255" placeholder="למשל, להשקות את העציצים" required>
+        <div><span class="eyebrow">משימות הבית</span><h2 id="taskDialogTitle">משימה חדשה</h2></div>
+        <button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button>
+      </div>
+      <input name="id" type="hidden">
+      <label for="taskName">מה צריך לעשות?</label>
+      <input id="taskName" name="name" maxlength="255" placeholder="למשל, להשקות את העציצים" required>
+      <label for="taskType">סוג המשימה</label>
+      <select id="taskType" name="type" aria-describedby="taskTypeHelp" required>
+        <option value="ONETIME">חד־פעמית — לתאריך מסוים</option>
+        <option value="WEEKLY">שבועית — חוזרת בכל שבוע</option>
+      </select>
+      <p id="taskTypeHelp" class="field-help">חד־פעמית לתאריך מסוים, או משימה שחוזרת ביום קבוע בכל שבוע.</p>
       <div class="form-grid">
-        <div><label for="taskDay">יום בשבוע</label><select id="taskDay" name="day" required>
-            <option value="Sunday">ראשון</option>
-            <option value="Monday">שני</option>
-            <option value="Tuesday">שלישי</option>
-            <option value="Wednesday">רביעי</option>
-            <option value="Thursday">חמישי</option>
-            <option value="Friday">שישי</option>
-            <option value="Saturday">שבת</option>
-          </select></div>
-        <div><label for="taskAssignee">מי אחראי?</label><select id="taskAssignee" name="assigneeId" required></select>
+        <div id="taskDateField">
+          <label for="taskDate">תאריך לביצוע</label>
+          <input id="taskDate" name="taskDate" type="date" required>
         </div>
-      </div><label for="taskDescription">פרטים נוספים <span class="optional">לא חובה</span></label><textarea
-        id="taskDescription" name="description" rows="3" maxlength="255"
-        placeholder="כל מה שכדאי לדעת על המשימה"></textarea>
+        <div id="taskDayField" hidden>
+          <label for="taskDay">באיזה יום בכל שבוע?</label>
+          <select id="taskDay" name="day" disabled>
+            <option value="SUNDAY">ראשון</option>
+            <option value="MONDAY">שני</option>
+            <option value="TUESDAY">שלישי</option>
+            <option value="WEDNESDAY">רביעי</option>
+            <option value="THURSDAY">חמישי</option>
+            <option value="FRIDAY">שישי</option>
+            <option value="SATURDAY">שבת</option>
+          </select>
+        </div>
+        <div>
+          <label for="taskAssignee">מי אחראי?</label>
+          <select id="taskAssignee" name="assigneeId" aria-describedby="taskAssigneeHelp" required></select>
+          <p id="taskAssigneeHelp" class="field-help" hidden>פרטי האחראי הנוכחי אינם זמינים. בחרו אחראי לפני השמירה.</p>
+        </div>
+      </div>
+      <label for="taskDescription">פרטים נוספים <span class="optional">לא חובה</span></label>
+      <textarea id="taskDescription" name="description" rows="3" maxlength="255" placeholder="כל מה שכדאי לדעת על המשימה"></textarea>
       <p class="form-error notice" role="alert" hidden></p>
-      <div class="dialog-actions"><button class="button button-primary" type="submit">שמירת המשימה</button><button
-          class="button button-secondary" data-close type="button">ביטול</button></div>
+      <div class="dialog-actions">
+        <button class="button button-primary" type="submit">שמירת המשימה</button>
+        <button class="button button-secondary" data-close type="button">ביטול</button>
+      </div>
     </form>
   </dialog>
 

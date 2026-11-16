@@ -12,7 +12,7 @@ class TaskStatisticsTest {
   AppUser a=mock(AppUser.class), b=mock(AppUser.class);
   when(a.getId()).thenReturn(1L);when(a.getUsername()).thenReturn("alice");when(b.getId()).thenReturn(2L);when(b.getUsername()).thenReturn("bob");
   when(users.findAll()).thenReturn(List.of(a,b));
-  Task task=new Task("Task","Sunday","");task.markCompleted(Instant.parse("2026-11-07T22:10:00Z"),"alice");
+  OneTimeTask task=new OneTimeTask("Task", "", null, java.time.LocalDate.of(2026, 11, 8));task.markAsCompleted("alice");
   Instant start=Instant.parse("2026-11-07T22:00:00Z"),end=Instant.parse("2026-11-14T22:00:00Z");
   when(tasks.findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(start,end)).thenReturn(List.of(task));
   var result=new TaskStatisticsService(tasks,users,clock).weekly();
@@ -21,8 +21,8 @@ class TaskStatisticsTest {
   verify(tasks).findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(start,end);
  }
  @Test void repeatedCompletionAndReassignmentPreserveOriginalCredit() {
-  Task task=new Task("Task","Sunday","");Instant first=Instant.parse("2026-11-08T10:00:00Z");
-  task.markCompleted(first,"alice");task.assignOwner(new AppUser("bob","unused"));task.markCompleted(first.plusSeconds(86400),"bob");
+  OneTimeTask task=new OneTimeTask("Task", "", null, java.time.LocalDate.of(2026, 11, 8));Instant first=Instant.parse("2026-11-08T10:00:00Z");
+  task.markAsCompleted("alice");first=task.getCompletedAt();task.assignOwner(new AppUser("bob","unused"));task.markAsCompleted("bob");
   assertEquals(first,task.getCompletedAt());assertEquals("alice",task.getCompletedByUsername());
  }
 }

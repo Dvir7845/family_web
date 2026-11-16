@@ -71,13 +71,13 @@ class AccountApiTest {
     }
     @Test void deletePreservesSharedDataAndExpiresDeletedUsersSession() throws Exception {
         MockHttpSession session = login();
-        Task task = new Task("Keep task", "Sunday", ""); task.assignOwner(member); task = tasks.saveAndFlush(task);
+        OneTimeTask task = new OneTimeTask("Keep task", "", null, java.time.LocalDate.of(2026, 11, 8)); task.assignOwner(member); task = tasks.saveAndFlush(task);
         Event event = events.saveAndFlush(new Event("Keep event", LocalDate.of(2099,1,1), new ArrayList<>(List.of(member.getId()))));
         Vehicle vehicle = vehicles.saveAndFlush(new Vehicle("Car"));
         bookings.saveAndFlush(new VehicleBooking(vehicle, member, LocalDate.of(2099,1,1), VehicleBooking.Slot.MORNING));
         mvc.perform(delete("/members/"+member.getId()).with(user("admin").roles("ADMIN")).with(csrf())).andExpect(status().isNoContent());
         assertFalse(users.existsById(member.getId()));
-        assertNull(tasks.findById(task.getId()).orElseThrow().getAssigneeUsername());
+        assertNull(tasks.findById(task.getId()).orElseThrow().getOwner());
         assertTrue(events.findById(event.getId()).orElseThrow().getInvitedUserIds().isEmpty());
         assertEquals(0, bookings.count()); assertEquals(1, vehicles.count());
         mvc.perform(get("/tasks").session(session).accept(MediaType.APPLICATION_JSON)).andExpect(status().isUnauthorized());

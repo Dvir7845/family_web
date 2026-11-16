@@ -23,22 +23,22 @@ public class TaskController {
     public TaskStatisticsService.WeeklyStatistics weeklyStatistics() { return statistics.weekly(); }
 
     @GetMapping("/tasks")
-    public List<Task> getTasks() {
+    public List<BaseTask> getTasks() {
         return taskService.getTasks();
     }
 
     @GetMapping("/tasks/{id}")
-    public Task getTaskById(@PathVariable long id) {
+    public BaseTask getTaskById(@PathVariable long id) {
         return taskService.getTaskById(id);
     }
 
     @PostMapping("/tasks")
-    public Task createTask(@Valid @RequestBody TaskRequest request) {
+    public BaseTask createTask(@Valid @RequestBody TaskRequest request) {
         return taskService.createTask(request);
     }
 
     @PutMapping("/tasks/{id}")
-    public Task updateTask(
+    public BaseTask updateTask(
             @PathVariable long id,
             @Valid @RequestBody TaskRequest request) {
         return taskService.updateTask(id, request);
@@ -51,7 +51,7 @@ public class TaskController {
     }
 
     @PatchMapping("/tasks/{id}/complete")
-    public Task completeTask(@PathVariable long id) {
+    public BaseTask completeTask(@PathVariable long id) {
         return taskService.completeTask(id);
     }
 

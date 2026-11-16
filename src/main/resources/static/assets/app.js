@@ -19,7 +19,7 @@ const state = {
   pendingDelete: null
 };
 const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-const dayValues = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const dayValues = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 const dateFormatter = new Intl.DateTimeFormat("he-IL", {
   timeZone: "Asia/Jerusalem", dateStyle: "short", timeStyle: "short"
 });
@@ -46,6 +46,11 @@ function errorMessage(status, data) {
   const translations = {
     "Current password is incorrect": "הסיסמה הנוכחית אינה נכונה.",
     "Cannot delete your own account": "לא ניתן למחוק את החשבון שבו מחוברים.",
+    "Task date is required for one-time tasks": "צריך לבחור תאריך למשימה החד־פעמית.",
+    "Day of the week is required for weekly tasks": "צריך לבחור יום למשימה השבועית.",
+    "Task date should not be provided for weekly tasks": "למשימה שבועית יש לבחור יום בשבוע בלבד.",
+    "Day of the week should not be provided for one-time tasks": "למשימה חד־פעמית יש לבחור תאריך בלבד.",
+    "Cannot change task type": "אי אפשר לשנות את סוג המשימה. אפשר ליצור משימה חדשה מהסוג הרצוי.",
     "Task name is required": "צריך למלא שם למשימה.",
     "Day is required": "צריך לבחור יום בשבוע.",
     "Assignee is required": "צריך לבחור אחראי למשימה.",
@@ -56,7 +61,7 @@ function errorMessage(status, data) {
     "Password exceeds the supported byte length": "הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר."
   };
   if (data?.message && translations[data.message]) return translations[data.message];
-  const fieldNames = new Set(["name", "day", "assigneeId", "productName", "quantity", "username", "password", "currentPassword", "newPassword"]);
+  const fieldNames = new Set(["name", "day", "assigneeId", "productName", "quantity", "username", "password", "currentPassword", "newPassword", "description", "type", "taskDate"]);
   if (status === 400 && data && typeof data === "object") {
     const messages = Object.entries(data)
       .filter(([key, value]) => fieldNames.has(key) && typeof value === "string")
@@ -134,6 +139,64 @@ function dayIndex(day) {
 function dayLabel(day) {
   const index = dayIndex(day);
   return index >= 0 ? `יום ${dayNames[index]}` : (day || "לא נקבע יום");
+}
+
+function israelToday() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Jerusalem", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  return parts.year + "-" + parts.month + "-" + parts.day;
+}
+
+function taskType(task) {
+  const type = task.type || task.taskType;
+  if (type === "ONETIME" || type === "ONE_TIME") return "ONETIME";
+  if (type === "WEEKLY") return "WEEKLY";
+  if (task.taskDate) return "ONETIME";
+  return task.day ? "WEEKLY" : "";
+}
+
+function taskAssignee(task) {
+  const id = task.assigneeId ?? task.owner?.id ?? null;
+  const username = task.assigneeUsername || task.owner?.username || "";
+  const member = state.assignees.find(person =>
+    (id !== null && String(person.id) === String(id)) ||
+    (username && person.username === username)
+  );
+  return { id: id ?? member?.id ?? null, username: username || member?.username || "" };
+}
+
+function isMyTask(task) {
+  const assignee = taskAssignee(task);
+  if (assignee.id !== null) return String(assignee.id) === String(state.user.id);
+  return Boolean(assignee.username && assignee.username === state.user.username);
+}
+
+function taskDayIndex(task) {
+  if (taskType(task) === "ONETIME") {
+    if (!task.taskDate) return -1;
+    return new Date(task.taskDate + "T00:00:00Z").getUTCDay();
+  }
+  return dayIndex(task.day);
+}
+
+function taskSortDate(task, today) {
+  if (taskType(task) === "ONETIME") return task.taskDate || "9999-12-31";
+  const day = taskDayIndex(task);
+  if (day < 0) return "9999-12-31";
+  const date = new Date(today + "T00:00:00Z");
+  date.setUTCDate(date.getUTCDate() + (day - date.getUTCDay() + 7) % 7);
+  return date.toISOString().slice(0, 10);
+}
+
+function syncTaskScheduleFields() {
+  const weekly = $("#taskType").value === "WEEKLY";
+  $("#taskDayField").hidden = !weekly;
+  $("#taskDateField").hidden = weekly;
+  $("#taskDay").disabled = !weekly;
+  $("#taskDay").required = weekly;
+  $("#taskDate").disabled = weekly;
+  $("#taskDate").required = !weekly;
 }
 
 function avatar(username) {
@@ -223,6 +286,7 @@ function setView(view) {
     state.filter = "all";
     $("#searchInput").value = "";
     $("#dayFilter").value = "all";
+    $("#taskTypeFilter").value = "all";
   }
   state.view = view;
   history.replaceState(null, "", `#${view}`);
@@ -272,11 +336,11 @@ function render() {
     ? "כל האירועים המשפחתיים במקום אחד."
     : shopping
       ? "מה חסר בבית? מוסיפים כאן, וכל המשפחה רואה."
-      : "כל המשימות במקום אחד. כל אחד יודע מה החלק שלו.";
+      : "משימות חד־פעמיות לפי תאריך ומשימות שחוזרות בכל שבוע, במקום אחד.";
 
   $("#boardTitle").textContent = events
     ? "מה קורה במשפחה?"
-    : shopping ? "מה צריך לקנות?" : "מה עושים השבוע?";
+    : shopping ? "מה צריך לקנות?" : "מה צריך לעשות?";
 
   $("#primaryAction").hidden =
     !state.loaded || (tasks && !isAdmin());
@@ -285,6 +349,7 @@ function render() {
 
   $("#taskFilters").hidden = !tasks;
   $("#dayFilter").hidden = !tasks;
+  $("#taskTypeFilter").hidden = !tasks;
 
   $("#searchInput").placeholder = events
     ? "חיפוש אירוע…"
@@ -359,13 +424,14 @@ function renderStats() {
   } else {
     values = [
       ["משימות פתוחות", state.tasks.filter(task => !task.completed).length, "tasks"],
-      ["באחריותי", state.tasks.filter(task => !task.completed && task.assigneeUsername === state.user.username).length, "users"],
+      ["באחריותי", state.tasks.some(task => !task.completed && !taskAssignee(task).username && taskAssignee(task).id === null)
+        ? null : state.tasks.filter(task => !task.completed && isMyTask(task)).length, "users"],
       ["כבר הושלמו", state.tasks.filter(task => task.completed).length, "check"]
     ];
   }
   values.forEach(([label, value, glyph], index) => {
     $("#statLabel" + (index + 1)).textContent = label;
-    $("#statValue" + (index + 1)).textContent = new Intl.NumberFormat("he-IL").format(value);
+    $("#statValue" + (index + 1)).textContent = value === null ? "—" : new Intl.NumberFormat("he-IL").format(value);
     $("#statIcon" + (index + 1)).setAttribute("href", `/assets/icons.svg#${glyph}`);
   });
 }
@@ -373,65 +439,85 @@ function renderStats() {
 function renderTasks() {
   const query = $("#searchInput").value.trim().toLowerCase();
   const day = $("#dayFilter").value;
+  const type = $("#taskTypeFilter").value;
+  const today = israelToday();
   const tasks = state.tasks.filter(task => {
-    const searchable = `${task.name} ${task.description || ""} ${task.assigneeUsername || ""}`.toLowerCase();
+    const assignee = taskAssignee(task);
+    const label = taskType(task) === "WEEKLY" ? "שבועית" : "חד־פעמית";
+    const searchable = [task.name, task.description || "", assignee.username,
+      task.taskDate || "", label].join(" ").toLowerCase();
     return (!query || searchable.includes(query))
-      && (day === "all" || dayIndex(task.day) === Number(day))
-      && (state.filter !== "mine" || task.assigneeUsername === state.user.username)
+      && (day === "all" || taskDayIndex(task) === Number(day))
+      && (type === "all" || taskType(task) === type)
+      && (state.filter !== "mine" || isMyTask(task))
       && (state.filter !== "open" || !task.completed)
       && (state.filter !== "done" || task.completed);
-  }).sort((a, b) => {
-    const first = dayIndex(a.day), second = dayIndex(b.day);
-    return (first < 0 ? 7 : first) - (second < 0 ? 7 : second)
-      || Number(a.completed) - Number(b.completed) || a.id - b.id;
-  });
-  $("#tableHead").innerHTML = "<tr><th scope='col'>המשימה</th><th scope='col'>יום</th><th scope='col'>באחריות</th><th scope='col'>מצב</th><th scope='col'><span class='sr-only'>פעולות</span></th></tr>";
+  }).sort((a, b) => Number(a.completed) - Number(b.completed)
+    || taskSortDate(a, today).localeCompare(taskSortDate(b, today)) || a.id - b.id);
+  $("#tableHead").innerHTML = "<tr><th scope='col'>המשימה</th><th scope='col'>מועד</th><th scope='col'>באחריות</th><th scope='col'>מצב</th><th scope='col'><span class='sr-only'>פעולות</span></th></tr>";
   const body = $("#tableBody");
   body.replaceChildren();
   tasks.forEach(task => {
     const row = document.createElement("tr");
+    const weekly = taskType(task) === "WEEKLY";
+    const assignee = taskAssignee(task);
     row.classList.toggle("completed-row", task.completed);
-    row.innerHTML = "<td class='item-main'></td><td data-label='יום'></td><td data-label='באחריות'></td><td data-label='מצב'></td><td class='item-actions'><div class='row-actions'></div></td>";
+    row.innerHTML = "<td class='item-main'></td><td data-label='מועד'></td><td data-label='באחריות'></td><td data-label='מצב'></td><td class='item-actions'><div class='row-actions'></div></td>";
     row.children[0].append(textElement("span", "item-title", task.name));
+    row.children[0].append(textElement("span", "task-kind" + (weekly ? " recurring" : ""), weekly ? "חוזרת בכל שבוע" : "חד־פעמית"));
     if (task.description) row.children[0].append(textElement("span", "item-description", task.description));
-    row.children[1].append(textElement("span", "day-tag", dayLabel(task.day)));
+    if (weekly) {
+      row.children[1].append(textElement("span", "day-tag", "כל " + dayLabel(task.day)));
+    } else if (task.taskDate) {
+      const [year, month, date] = task.taskDate.split("-");
+      const time = textElement("time", "task-due-date", date + "/" + month + "/" + year);
+      time.dateTime = task.taskDate;
+      row.children[1].append(time,
+        textElement("span", "item-description", formatHebrewDate(new Date(task.taskDate + "T00:00:00Z"))));
+      if (!task.completed && task.taskDate < today) {
+        row.children[1].append(textElement("span", "task-overdue", "באיחור"));
+      }
+    } else {
+      row.children[1].append(textElement("span", "muted", "לא נקבע תאריך"));
+    }
     const person = document.createElement("span");
     person.className = "person";
-    if (task.assigneeUsername) person.append(avatar(task.assigneeUsername));
-    person.append(textElement("span", "", task.assigneeUsername || "טרם הוקצה"));
+    if (assignee.username) person.append(avatar(assignee.username));
+    person.append(textElement("span", "", assignee.username || "פרטי אחראי לא זמינים"));
     row.children[2].append(person);
-    row.children[3].append(textElement("span", `badge${task.completed ? " done" : ""}`, task.completed ? "הושלמה" : "לביצוע"));
+    row.children[3].append(textElement("span", "badge" + (task.completed ? " done" : ""), task.completed ? "הושלמה" : "לביצוע"));
     const actions = row.querySelector(".row-actions");
-    if (!task.completed && task.assigneeUsername === state.user.username) {
+    if (!task.completed && isMyTask(task)) {
       const complete = document.createElement("button");
       complete.type = "button";
       complete.className = "complete-button";
-      complete.innerHTML = `${icon("check")}<span>סיימתי</span>`;
-      complete.setAttribute("aria-label", `סימון המשימה ${task.name} כהושלמה`);
+      complete.innerHTML = icon("check") + "<span>סיימתי</span>";
+      complete.setAttribute("aria-label", "סימון המשימה " + task.name + " כהושלמה");
       complete.addEventListener("click", () => runButtonAction(complete, async () => {
-        await api(`/tasks/${task.id}/complete`, "PATCH");
+        await api("/tasks/" + task.id + "/complete", "PATCH");
         notify("עוד משימה מאחורינו. תודה על החלק שלך!");
         await loadData();
       }));
       actions.append(complete);
     } else if (task.completed && !isAdmin()) {
-      const done = textElement("span", "completed-note", "בוצע");
-      done.prepend(Object.assign(document.createElement("span"), { innerHTML: icon("check") }));
-      actions.append(done);
+      actions.append(textElement("span", "completed-note", "בוצע"));
     }
     if (isAdmin()) {
-      actions.append(actionButton("edit", `עריכת המשימה ${task.name}`, () => openTask(task)));
-      actions.append(actionButton("trash", `מחיקת המשימה ${task.name}`, () => confirmDelete(
-        "למחוק את המשימה?", `המשימה ״${task.name}״ תוסר מהלוח של כל המשפחה.`, async () => {
-          await api(`/tasks/${task.id}`, "DELETE");
+      actions.append(actionButton("edit", "עריכת המשימה " + task.name, () => openTask(task)));
+      actions.append(actionButton("trash", "מחיקת המשימה " + task.name, () => confirmDelete(
+        weekly ? "למחוק את המשימה השבועית?" : "למחוק את המשימה?",
+        weekly ? "המשימה ״" + task.name + "״ תוסר מהלוח ולא תחזור בשבועות הבאים."
+          : "המשימה ״" + task.name + "״ תוסר מהלוח של כל המשפחה.",
+        async () => {
+          await api("/tasks/" + task.id, "DELETE");
           notify("המשימה הוסרה מהלוח.");
         }
       ), true));
     }
     body.append(row);
   });
-  $("#boardCount").textContent = `${tasks.length} משימות מוצגות · ${state.tasks.length} בסך הכול`;
-  showTableOrEmpty(tasks.length, Boolean(query || day !== "all" || state.filter !== "all"));
+  $("#boardCount").textContent = tasks.length + " משימות מוצגות · " + state.tasks.length + " בסך הכול";
+  showTableOrEmpty(tasks.length, Boolean(query || day !== "all" || type !== "all" || state.filter !== "all"));
 }
 
 function renderShopping() {
@@ -664,6 +750,7 @@ function showTableOrEmpty(count, filtered) {
       state.filter = "all";
       $("#searchInput").value = "";
       $("#dayFilter").value = "all";
+      $("#taskTypeFilter").value = "all";
       render();
       return;
     }
@@ -692,20 +779,25 @@ function openTask(task) {
   $("#taskDialogTitle").textContent = task ? "עריכת המשימה" : "משימה חדשה";
   $("#taskName").value = task?.name || "";
   $("#taskDescription").value = task?.description || "";
-  $("#taskDay").querySelectorAll("[data-custom-day]").forEach(option => option.remove());
-  const todayName = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Jerusalem", weekday: "long" }).format(new Date());
-  const selectedDay = task ? dayIndex(task.day) : dayValues.indexOf(todayName);
-  if (task && selectedDay < 0) {
-    const option = new Option(task.day, task.day);
-    option.dataset.customDay = "true";
-    $("#taskDay").append(option);
-    $("#taskDay").value = task.day;
-  } else $("#taskDay").value = dayValues[selectedDay];
+  $("#taskType").value = task ? taskType(task) : "ONETIME";
+  $("#taskType").disabled = Boolean(task);
+  $("#taskTypeHelp").textContent = task
+    ? "סוג המשימה קבוע. כדי לבחור סוג אחר, צרו משימה חדשה."
+    : "חד־פעמית לתאריך מסוים, או משימה שחוזרת ביום קבוע בכל שבוע.";
+  $("#taskDate").value = task?.taskDate || israelToday();
+  const todayDay = new Date(israelToday() + "T00:00:00Z").getUTCDay();
+  const selectedDay = task ? dayIndex(task.day) : todayDay;
+  $("#taskDay").value = dayValues[selectedDay >= 0 ? selectedDay : todayDay];
+  syncTaskScheduleFields();
   const select = $("#taskAssignee");
   select.replaceChildren(new Option("בחירת אחראי", ""));
   state.assignees.forEach(member => select.append(new Option(member.username, member.id)));
-  const selected = state.assignees.find(member => member.username === task?.assigneeUsername);
+  const assignee = task ? taskAssignee(task) : null;
+  const selected = assignee && state.assignees.find(member =>
+    (assignee.id !== null && String(member.id) === String(assignee.id)) ||
+    (assignee.username && member.username === assignee.username));
   select.value = selected ? String(selected.id) : "";
+  $("#taskAssigneeHelp").hidden = !task || Boolean(selected);
   $("#taskDialog").showModal();
   $("#taskName").focus();
 }
@@ -830,15 +922,27 @@ function handleForm(form, action) {
   });
 }
 
+$("#taskType").addEventListener("change", syncTaskScheduleFields);
+
 handleForm($("#taskForm"), async form => {
   const id = form.elements.namedItem("id").value;
+  const type = $("#taskType").value;
+  if (!["ONETIME", "WEEKLY"].includes(type)) throw new Error("צריך לבחור סוג משימה.");
+  const existing = id && state.tasks.find(task => String(task.id) === String(id));
+  if (existing && taskType(existing) !== type) throw new Error("אי אפשר לשנות את סוג המשימה.");
   const body = {
-    name: $("#taskName").value.trim(), day: $("#taskDay").value,
+    name: $("#taskName").value.trim(),
     description: $("#taskDescription").value.trim(),
-    assigneeId: Number($("#taskAssignee").value)
+    assigneeId: Number($("#taskAssignee").value),
+    type,
+    taskDate: type === "ONETIME" ? $("#taskDate").value : null,
+    day: type === "WEEKLY" ? $("#taskDay").value : null
   };
   if (!body.name) throw new Error("צריך למלא שם למשימה.");
-  await api(id ? `/tasks/${id}` : "/tasks", id ? "PUT" : "POST", body);
+  if (!Number.isSafeInteger(body.assigneeId) || body.assigneeId <= 0) throw new Error("צריך לבחור אחראי למשימה.");
+  if (type === "ONETIME" && !/^\d{4}-\d{2}-\d{2}$/.test(body.taskDate)) throw new Error("צריך לבחור תאריך למשימה.");
+  if (type === "WEEKLY" && !dayValues.includes(body.day)) throw new Error("צריך לבחור יום בשבוע.");
+  await api(id ? "/tasks/" + id : "/tasks", id ? "PUT" : "POST", body);
   $("#taskDialog").close();
   notify(id ? "המשימה עודכנה." : "המשימה נוספה ללוח המשפחתי.");
   await loadData();
@@ -940,6 +1044,7 @@ document.querySelectorAll("[data-filter]").forEach(button => button.addEventList
 }));
 $("#searchInput").addEventListener("input", render);
 $("#dayFilter").addEventListener("change", render);
+$("#taskTypeFilter").addEventListener("change", render);
 $("#refreshButton").addEventListener("click", () => loadData());
 $("#primaryAction").addEventListener("click", () => {
   if (state.view === "vehicles") {

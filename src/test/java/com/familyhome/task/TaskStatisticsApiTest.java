@@ -24,14 +24,14 @@ class TaskStatisticsApiTest {
   ZoneId zone=ZoneId.of("Asia/Jerusalem");LocalDate start=LocalDate.now(zone).with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
   Instant boundary=start.atStartOfDay(zone).toInstant();
   for(Instant instant: new Instant[]{boundary,boundary.minusNanos(1000000000),start.plusWeeks(1).atStartOfDay(zone).toInstant()}) {
-   Task task=new Task("Count boundaries","Sunday","");task.assignOwner(bob);task.markCompleted(instant,"alice");tasks.saveAndFlush(task);
+   OneTimeTask task=new OneTimeTask("Count boundaries", "", null, java.time.LocalDate.of(2026, 11, 8));task.assignOwner(bob);task.markAsCompleted("alice");org.springframework.test.util.ReflectionTestUtils.setField(task,"completedAt",instant);tasks.saveAndFlush(task);
   }
   mvc.perform(get("/tasks/statistics/weekly").with(user("bob"))).andExpect(status().isOk())
    .andExpect(jsonPath("$.members[?(@.username == 'alice')].completedCount").value(org.hamcrest.Matchers.hasItem(1)))
    .andExpect(jsonPath("$.members[?(@.username == 'bob')].completedCount").value(org.hamcrest.Matchers.hasItem(0)));
  }
  @Test void completingTwiceCountsOnceAndPersistsPerformer() throws Exception {
-  AppUser alice=users.saveAndFlush(new AppUser("alice","unused"));Task task=new Task("Complete","Monday","");task.assignOwner(alice);task=tasks.saveAndFlush(task);
+  AppUser alice=users.saveAndFlush(new AppUser("alice","unused"));OneTimeTask task=new OneTimeTask("Complete", "", null, java.time.LocalDate.of(2026, 11, 8));task.assignOwner(alice);task=tasks.saveAndFlush(task);
   for(int i=0;i<2;i++) mvc.perform(patch("/tasks/"+task.getId()+"/complete").with(user("alice")).with(csrf())).andExpect(status().isOk());
   tasks.flush();assertNotNull(tasks.findById(task.getId()).orElseThrow().getCompletedAt());
   mvc.perform(get("/tasks/statistics/weekly").with(user("alice"))).andExpect(jsonPath("$.members[?(@.username == 'alice')].completedCount").value(org.hamcrest.Matchers.hasItem(1)));

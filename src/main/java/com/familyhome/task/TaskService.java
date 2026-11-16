@@ -42,11 +42,11 @@ public class TaskService {
                         "User not found"));
     }
 
-    public List<Task> getTasks() {
+    public List<BaseTask> getTasks() {
         return taskRepository.findAll();
     }
 
-    public Task getTaskById(long id) {
+    public BaseTask getTaskById(long id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -54,53 +54,62 @@ public class TaskService {
     }
 
     @Transactional
-    public Task createTask(TaskRequest request) {
+    public BaseTask createTask(TaskRequest request) {
         requireAdmin();
-        
+        validateRequest(request);
+
         AppUser user = findAssignee(request.assigneeId());
 
-        Task task = new Task(
-                request.name(),
-                request.day(),
-                request.description());
-
-        task.assignOwner(user);
+        BaseTask task = switch (request.type()) {
+            case ONETIME -> new OneTimeTask(
+                    request.name(),
+                    request.description(),
+                    user,
+                    request.taskDate());
+            case WEEKLY -> new RecurringTask(
+                    request.name(),
+                    request.description(),
+                    user,
+                    request.day());
+        };
         return taskRepository.save(task);
     }
 
     @Transactional
-    public Task updateTask(long id, TaskRequest request) {
+    public BaseTask updateTask(long id, TaskRequest request) {
         requireAdmin();
+        validateRequest(request);
+        BaseTask task = getTaskById(id);
+        AppUser user = findAssignee(request.assigneeId());
 
-        Task task = getTaskById(id);
-        AppUser assignee = findAssignee(request.assigneeId());
-
-        task.updateDetails(
-                request.name(),
-                request.day(),
-                request.description());
-
-        task.assignOwner(assignee);
+        if (task instanceof OneTimeTask oneTimeTask && request.type() == TaskType.ONETIME) {
+            oneTimeTask.updateDetails(request.name(), request.description(), request.taskDate());
+        } else if (task instanceof RecurringTask recurringTask && request.type() == TaskType.WEEKLY) {
+            recurringTask.updateDetails(request.name(), request.description(), request.day());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change task type");
+        }
+        task.assignOwner(user);
         return taskRepository.save(task);
     }
 
     @Transactional
     public void deleteTask(long id) {
         requireAdmin();
-        Task task = getTaskById(id);
+        BaseTask task = getTaskById(id);
         taskRepository.delete(task);
     }
 
     @Transactional
-    public Task completeTask(long id) {
+    public BaseTask completeTask(long id) {
         AppUser user = getCurrentUser();
 
-        Task task = taskRepository.findByIdAndOwnerId(id, user.getId())
+        BaseTask task = taskRepository.findByIdAndOwnerId(id, user.getId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Task not found among your assignments"));
 
-        task.markCompleted(java.time.Instant.now(), user.getUsername());
+        task.markAsCompleted(user.getUsername());
 
         return taskRepository.save(task);
     }
@@ -134,5 +143,29 @@ public class TaskService {
                         user.getId(),
                         user.getUsername()))
                 .toList();
+    }
+
+    private void validateRequest(TaskRequest request) {
+        if (request.type() == TaskType.ONETIME && request.taskDate() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Task date is required for one-time tasks");
+        }
+        if (request.type() == TaskType.WEEKLY && request.day() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Day of the week is required for weekly tasks");
+        }
+        if (request.type() == TaskType.WEEKLY && request.taskDate() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Task date should not be provided for weekly tasks");
+        }
+        if (request.type() == TaskType.ONETIME && request.day() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Day of the week should not be provided for one-time tasks");
+        }
+
     }
 }

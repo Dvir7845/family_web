@@ -5,11 +5,11 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<BaseTask, Long> {
 
-    List<Task> findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(java.time.Instant start, java.time.Instant end);
+    List<BaseTask> findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(java.time.Instant start, java.time.Instant end);
 
-    List<Task> findAllByOwnerId(Long ownerId);
+    List<BaseTask> findAllByOwnerId(Long ownerId);
 
-    Optional<Task> findByIdAndOwnerId(Long id, Long ownerId);
+    Optional<BaseTask> findByIdAndOwnerId(Long id, Long ownerId);
 }

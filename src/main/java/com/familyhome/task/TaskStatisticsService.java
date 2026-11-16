@@ -23,7 +23,7 @@ public class TaskStatisticsService {
         LocalDate start = LocalDate.now(clock.withZone(zone)).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         Map<String, Long> counts = new HashMap<>();
         tasks.findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(start.atStartOfDay(zone).toInstant(), start.plusWeeks(1).atStartOfDay(zone).toInstant())
-            .stream().filter(Task::isCompleted).forEach(task -> {
+            .stream().filter(BaseTask::isCompleted).forEach(task -> {
                 if (task.getCompletedByUsername() != null) counts.merge(task.getCompletedByUsername(), 1L, Long::sum);
             });
         List<MemberCount> members = users.findAll().stream()

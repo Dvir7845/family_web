@@ -141,7 +141,8 @@ class CurrentMemberApiTest {
                                                 .content("""
                                                                 {
                                                                   "name": "Shopping",
-                                                                  "day": "Sunday",
+                                                                  "type": "WEEKLY",
+                                                                  "day": "SUNDAY",
                                                                   "description": "Buy milk",
                                                                   "assigneeId": %d
                                                                 }
@@ -153,13 +154,14 @@ class CurrentMemberApiTest {
 
                 Number taskId = JsonPath.read(response, "$.id");
 
-                // another family member sees the task and the assignee
+                // another family member sees the shared weekly task
                 mockMvc.perform(
                                 get("/tasks")
                                                 .with(httpBasic("viewer_member", "MemberPass123!")))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$[0].assigneeUsername")
-                                                .value("assigned_member"));
+                                .andExpect(jsonPath("$[0].name").value("Shopping"))
+                                .andExpect(jsonPath("$[0].day").value("SUNDAY"))
+                                .andExpect(jsonPath("$[0].owner").doesNotExist());
 
                 // the same family member cannot mark as complete
                 mockMvc.perform(
