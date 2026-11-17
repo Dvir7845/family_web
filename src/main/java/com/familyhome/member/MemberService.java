@@ -40,6 +40,7 @@ public class MemberService {
 
         user.changeRole(Role.MEMBER);
         user.changeDriver(Boolean.TRUE.equals(request.driver()));
+        user.changeTaskManager(Boolean.TRUE.equals(request.taskManager()));
 
         try {
             user = userRepository.saveAndFlush(user);

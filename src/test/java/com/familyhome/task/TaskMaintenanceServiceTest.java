@@ -5,6 +5,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -12,26 +13,40 @@ import static org.mockito.Mockito.*;
 class TaskMaintenanceServiceTest {
 
     @Test
-    void deletesOnlyCompletedOneTimeTasks() {
+    void deletesCompletedOrExpiredOneTimeTasksAndKeepsTodayAndFutureTasks() {
         TaskRepository taskRepository = mock(TaskRepository.class);
         TaskMaintenanceService maintenanceService = new TaskMaintenanceService(taskRepository);
         AppUser owner = new AppUser("member", "unused");
+        LocalDate today = LocalDate.of(2030, 3, 10);
 
-        OneTimeTask completedOneTime = new OneTimeTask("Done once", "", owner, LocalDate.of(2026, 11, 15));
+        OneTimeTask completedOneTime = new OneTimeTask("Done once", "", owner, today.plusDays(7));
         completedOneTime.markAsCompleted("member");
 
-        OneTimeTask openOneTime = new OneTimeTask("Open once", "", owner, LocalDate.of(2026, 11, 16));
+        OneTimeTask expiredOneTime = new OneTimeTask("Overdue once", "", owner, today.minusDays(1));
+        OneTimeTask dueToday = new OneTimeTask("Due today", "", owner, today);
+        OneTimeTask futureOneTime = new OneTimeTask("Due later", "", owner, today.plusDays(1));
 
         RecurringTask completedRecurring = new RecurringTask("Done weekly", "", owner, DayOfWeek.SUNDAY);
         completedRecurring.markAsCompleted("member");
+        RecurringTask openRecurring = new RecurringTask("Open weekly", "", owner, DayOfWeek.MONDAY);
 
-        when(taskRepository.findAll()).thenReturn(List.of(completedOneTime, openOneTime, completedRecurring));
+        when(taskRepository.findAll()).thenReturn(List.of(
+                completedOneTime, expiredOneTime, dueToday,
+                futureOneTime, completedRecurring, openRecurring));
 
-        maintenanceService.deleteAllCompletedOneTimeTasks();
+        // Production currently calls LocalDate.now() directly. Fix only this
+        // test's date until production accepts an injected Clock.
+        try (MockedStatic<LocalDate> dates = mockStatic(LocalDate.class, CALLS_REAL_METHODS)) {
+            dates.when(LocalDate::now).thenReturn(today);
+            maintenanceService.deleteAllCompletedOneTimeTasks();
+        }
 
         verify(taskRepository).delete(completedOneTime);
-        verify(taskRepository, never()).delete(openOneTime);
+        verify(taskRepository).delete(expiredOneTime);
+        verify(taskRepository, never()).delete(dueToday);
+        verify(taskRepository, never()).delete(futureOneTime);
         verify(taskRepository, never()).delete(completedRecurring);
+        verify(taskRepository, never()).delete(openRecurring);
     }
 
     @Test

@@ -2,7 +2,7 @@
 
 A shared family home board built with Spring Boot and a Hebrew, right-to-left browser interface. The application brings together household tasks, shopping, family events, member accounts and vehicle bookings.
 
-This is a learning and portfolio project for a single family. The frontend is served by the same application as the API and requires no frontend installation or build step. Hosted deployment is planned.
+This is a learning and portfolio project focused on backend architecture (Java, Spring Boot, Spring Security, JPA/PostgreSQL). A lightweight browser UI was generated with AI assistance and is served directly by the Spring Boot application to allow end-to-end usage and testing without a separate frontend build step.
 
 ## Features
 
@@ -87,6 +87,10 @@ Open `family-home.code-workspace` from the project directory, or open the direct
 
 The database must remain available while the application runs. Development schema management uses `spring.jpa.hibernate.ddl-auto=update`; on the next startup it adds the driver column and vehicle tables to an existing database. Restart the server after backend changes, rebuild any executable JAR in use, and refresh the browser to load updated frontend assets.
 
+### Upgrading an existing database
+
+The task model uses single-table inheritance in `tasks` (`task_type`: `ONETIME` / `WEEKLY`). When upgrading a database that already contains legacy task rows, migrate existing rows by setting `task_type`, providing `task_date` for one-time tasks, and normalizing `day` values to `DayOfWeek` enum names (`SUNDAY`–`SATURDAY`).
+
 ## Browser interface
 
 The interface lives in [src/main/resources/static](src/main/resources/static). It includes task, shopping, event and driver-only vehicle tabs, administrator member management and a password change button for every user.
@@ -127,8 +131,8 @@ Self-deletion is blocked. Session expiration is applied after the database trans
 ## Automatic cleanup
 
 - **Tasks:**
-  - **One-time tasks:** a daily job at midnight in `Asia/Jerusalem` removes completed `ONETIME` tasks. Open one-time tasks remain on the board until completed.
-  - **Weekly tasks:** a weekly job on Sunday at midnight in `Asia/Jerusalem` resets the completion status (`completed`, `completedAt`, `completedByUsername`) of all `WEEKLY` tasks for the new week.
+  - **One-time tasks:** a daily job at midnight (`Asia/Jerusalem`) removes `ONETIME` tasks that are completed or past their `taskDate`.
+  - **Weekly tasks:** a weekly job on Sunday at midnight (`Asia/Jerusalem`) resets the completion status (`completed`, `completedAt`, `completedByUsername`) of all `WEEKLY` tasks for the new week.
 - **Shopping:** the server sets `updatedAt` on creation and update. Items not updated for at least seven days are removed when the scheduled job first runs after startup, then with a 24-hour delay between runs. Viewing a list does not refresh update times.
 - **Events:** a daily job at midnight in `Asia/Jerusalem` removes events dated more than 30 days before today. Events exactly 30 days old remain until a later run.
 
@@ -276,7 +280,7 @@ Run the Java test suite:
 
 The suite uses mocked repositories or isolated H2 databases. It does not require a running PostgreSQL server or real database credentials. Fixed passwords in test sources are disposable test fixtures only.
 
-Coverage includes authentication, CSRF, task assignment/completion permissions, shared shopping and events, cleanup rules, account creation/deletion, BCrypt storage, current-password validation, session expiration, driver access, monthly bookings, cancellation permissions, duplicate-slot rejection, vehicle deletion with booking cleanup, and administrator promotion with session expiration.
+Coverage includes authentication, CSRF, task creation/update/assignment/completion permissions, scheduled task maintenance, shared shopping and events, cleanup rules, account creation/deletion, BCrypt storage, current-password validation, session expiration, driver access, monthly bookings, cancellation permissions, duplicate-slot rejection, vehicle deletion with booking cleanup, and administrator promotion with session expiration.
 
 With Node.js installed, run the standalone vehicle calendar UI test from the project directory:
 
@@ -286,7 +290,7 @@ node .\src\test\js\vehicle-calendar.test.cjs
 
 This test uses Node.js built-in modules and a simulated DOM to check leap-year February, free/booked slots and administrator controls. It does not render CSS.
 
-The latest implementation checks passed all **61 Java tests** and the vehicle calendar JavaScript test. Mobile layout was additionally checked in headless Chrome using local sample data: **72 layout measurements** across **320, 375, 390, 430, 580, 768, 1024 and 1440px**, with no page-level or dialog horizontal overflow, followed by a visual check of the phone layout. Those browser checks were a local validation exercise; generated previews and measurements are in ignored `target/`, not a committed browser test suite.
+The suite includes **68 Java tests** (unit, JPA repository, security and MockMvc API tests) plus the standalone vehicle calendar JavaScript test. Mobile layout was also validated in headless Chrome across 8 viewport widths (`320px`–`1440px`).
 
 ## Build an executable JAR
 
@@ -340,4 +344,4 @@ Do not commit real passwords, tokens, environment files or database backups. Bui
 
 The task tab shows a weekly bar chart for every current family member, including zero counts. Gold bars and a trophy mark every member tied for the highest positive count. Weeks run Sunday through Saturday in Asia/Jerusalem. `GET /tasks/statistics/weekly` requires authentication and returns `weekStart`, `weekEnd` and member counts.
 
-Completion now stores `completedAt` and `completedByUsername` on the task. Repeated completion preserves the first timestamp and performer; reassignment does not transfer credit. Existing completed tasks without a recorded completion date are excluded. Counts use tasks still present in the database; deleting a task removes it from these statistics, and deleted accounts are not listed. Hibernate adds the new nullable columns on startup with the existing development schema configuration.
+Completion stores `completedAt` and `completedByUsername` on the task. Repeated completion preserves the first timestamp and performer; reassignment does not transfer credit. Counts reflect retained tasks in the database for the current week.
