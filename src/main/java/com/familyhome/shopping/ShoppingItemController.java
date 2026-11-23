@@ -1,9 +1,11 @@
 package com.familyhome.shopping;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 
+ 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,26 +20,24 @@ public class ShoppingItemController {
     }
 
     @GetMapping
-    public List<ShoppingItem> getItems() {
-        return service.getItems();
+    public Page<ShoppingItemResponse> getItems(@PageableDefault(size = 50) Pageable pageable) {
+        return service.getItems(pageable);
     }
 
     @GetMapping("/{id}")
-    public ShoppingItem getItem(@PathVariable long id) {
+    public ShoppingItemResponse getItem(@PathVariable long id) {
         return service.getItem(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ShoppingItem createItem(
-            @Valid @RequestBody ShoppingItemRequest request) {
+    public ShoppingItemResponse createItem(@Valid @RequestBody ShoppingItemRequest request) {
         return service.createItem(request);
     }
 
     @PutMapping("/{id}")
-    public ShoppingItem updateItem(
-            @PathVariable long id,
-            @Valid @RequestBody ShoppingItemRequest request) {
+    public ShoppingItemResponse updateItem(
+            @PathVariable long id, @Valid @RequestBody ShoppingItemRequest request) {
         return service.updateItem(id, request);
     }
 

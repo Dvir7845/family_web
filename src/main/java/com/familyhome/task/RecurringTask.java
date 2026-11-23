@@ -1,19 +1,18 @@
 package com.familyhome.task;
 
+import com.familyhome.exception.BusinessRuleException;
 import com.familyhome.member.AppUser;
-
-import jakarta.persistence.Entity;
 import jakarta.persistence.DiscriminatorValue;
-
-import java.time.DayOfWeek;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 
 @Entity
 @DiscriminatorValue("WEEKLY")
 public class RecurringTask extends BaseTask {
-   
+
     @Enumerated(EnumType.STRING)
     private DayOfWeek day;
 
@@ -28,14 +27,16 @@ public class RecurringTask extends BaseTask {
     public DayOfWeek getDay() {
         return day;
     }
-
     
-
-    public void updateDetails(String name, String description, DayOfWeek day) {
+    @Override 
+    public void updateDetails(String name, String description, LocalDate taskDate, DayOfWeek day) {
+        if (taskDate != null || day == null) {
+            throw new BusinessRuleException("Cannot change task type");
+        }
         super.updateDetails(name, description);
         this.day = day;
     }
-    
+
     @Override
     public void resetWeeklyStatus() {
         super.setCompleted(false);
@@ -43,5 +44,8 @@ public class RecurringTask extends BaseTask {
         super.setCompletedByUsername(null);
     }
 
-
+    @Override
+    public TaskType getType() {
+        return TaskType.WEEKLY;
+    }
 }

@@ -2,17 +2,21 @@ package com.familyhome.task;
 
 import com.familyhome.member.AppUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.InheritanceType;
+
+import java.time.DayOfWeek;
+import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "tasks")
@@ -21,7 +25,7 @@ import jakarta.persistence.InheritanceType;
 public abstract class BaseTask {
 
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
@@ -35,11 +39,10 @@ public abstract class BaseTask {
     @Column(nullable = false)
     private boolean completed = false;
 
-    private java.time.Instant completedAt;
+    private Instant completedAt;
     private String completedByUsername;
 
-    protected BaseTask() {
-    }
+    protected BaseTask() {}
 
     public BaseTask(String name, String description, AppUser owner) {
         this.name = name;
@@ -70,6 +73,16 @@ public abstract class BaseTask {
     public String getAssigneeUsername() {
         return owner == null ? null : owner.getUsername();
     }
+    
+    public abstract TaskType getType();
+
+    public LocalDate getTaskDate() {
+        return null;
+    }
+
+    public DayOfWeek getDay() {
+        return null;
+    }
 
     public boolean isCompleted() {
         return completed;
@@ -79,11 +92,11 @@ public abstract class BaseTask {
         this.completed = completed;
     }
 
-    public java.time.Instant getCompletedAt() {
+    public Instant getCompletedAt() {
         return completedAt;
     }
 
-    public void setCompletedAt(java.time.Instant completedAt) {
+    public void setCompletedAt(Instant completedAt) {
         this.completedAt = completedAt;
     }
 
@@ -100,19 +113,24 @@ public abstract class BaseTask {
         this.description = description;
     }
 
+    public abstract void updateDetails(String name, String description, LocalDate taskDate, DayOfWeek day);
+
     public void assignOwner(AppUser owner) {
         this.owner = owner;
     }
 
     public void markAsCompleted(String completedByUsername) {
-        if (this.completed) return; 
+        if (this.completed) return;
         this.completed = true;
-        this.completedAt = java.time.Instant.now();
+        this.completedAt = Instant.now();
         this.completedByUsername = completedByUsername;
     }
 
-    public boolean shouldDeleteOnDailyCleanup() { return false; }
-    public void resetWeeklyStatus() {}
-    
+    public boolean shouldDeleteOnDailyCleanup(LocalDate today) {
+        return false;
+    }
 
+    public void resetWeeklyStatus() {}
+
+    
 }

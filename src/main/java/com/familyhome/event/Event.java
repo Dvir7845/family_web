@@ -1,14 +1,21 @@
 package com.familyhome.event;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.Table;
-import jakarta.persistence.Column;
-import java.time.LocalDate;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
 
-import java.util.List;
+import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import com.familyhome.member.AppUser;
+
 
 
 @Entity
@@ -25,16 +32,20 @@ public class Event {
     @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 
-    @Column(name = "invited_user_id", nullable = false)
-    private List<Long> invitedUserIds;
+    @ManyToMany
+    @JoinTable (
+        name = "event_invitees",
+        joinColumns = @JoinColumn(name = "event_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<AppUser> invitedUser = new LinkedHashSet<>();
 
-    protected Event() {
-    }
+    protected Event() {}
 
-    public Event(String description, LocalDate eventDate, List<Long> invitedUserIds) {
+    public Event(String description, LocalDate eventDate, Set<AppUser> invitedUser) {
         this.description = description;
         this.eventDate = eventDate;
-        this.invitedUserIds = invitedUserIds;
+        this.invitedUser = invitedUser == null ? new LinkedHashSet<>() : new LinkedHashSet<>(invitedUser);
     }
 
     public Long getId() {
@@ -49,21 +60,21 @@ public class Event {
         return eventDate;
     }
 
-    public List<Long> getInvitedUserIds() {
-        return invitedUserIds;
+    public Set<AppUser> getInvitedUser() {
+        return invitedUser;
     }
 
-    public void addInvitedUserId(Long userId) {
-        this.invitedUserIds.add(userId);
+    public void addInvitedUser(AppUser user) {
+        this.invitedUser.add(user);
     }
 
-    public void removeInvitedUserId(Long userId) {
-        this.invitedUserIds.remove(userId);
+    public void removeInvitedUser(AppUser user) {
+        this.invitedUser.remove(user);
     }
 
-    public void updateDetails(String description, LocalDate eventDate, List<Long> invitedUserIds) {
+    public void updateDetails(String description, LocalDate eventDate, Set<AppUser> invitedUserIds) {
         this.description = description;
         this.eventDate = eventDate;
-        this.invitedUserIds = invitedUserIds;
+        this.invitedUser = invitedUserIds;
     }
 }

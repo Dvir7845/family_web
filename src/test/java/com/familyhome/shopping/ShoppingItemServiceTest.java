@@ -1,17 +1,20 @@
 package com.familyhome.shopping;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 class ShoppingItemServiceTest {
 
@@ -33,34 +36,27 @@ class ShoppingItemServiceTest {
         when(repository.save(any(ShoppingItem.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        ShoppingItem item = service.createItem(
-                new ShoppingItemRequest("Milk", 2));
+        ShoppingItemResponse item = service.createItem(new ShoppingItemRequest("Milk", 2));
 
-        assertEquals("Milk", item.getProductName());
-        assertEquals(2, item.getQuantity());
-        assertEquals(now, item.getUpdatedAt());
+        assertEquals("Milk", item.productName());
+        assertEquals(2, item.quantity());
+        assertEquals(now, item.updatedAt());
 
-        verify(repository).save(item);
+        verify(repository).save(any(ShoppingItem.class));
     }
 
     @Test
     void updatingAnOldItemRefreshesItsDate() {
-        ShoppingItem item = new ShoppingItem(
-                "Milk",
-                1,
-                now.minus(8, ChronoUnit.DAYS));
+        ShoppingItem item = new ShoppingItem("Milk", 1, now.minus(8, ChronoUnit.DAYS));
 
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(item));
+        when(repository.findById(1L)).thenReturn(Optional.of(item));
 
         when(repository.save(item)).thenReturn(item);
 
-        ShoppingItem result = service.updateItem(
-                1L,
-                new ShoppingItemRequest("Milk", 3));
+        ShoppingItemResponse result = service.updateItem(1L, new ShoppingItemRequest("Milk", 3));
 
-        assertEquals(3, result.getQuantity());
-        assertEquals(now, result.getUpdatedAt());
+        assertEquals(3, result.quantity());
+        assertEquals(now, result.updatedAt());
 
         verify(repository).save(item);
     }
@@ -69,16 +65,15 @@ class ShoppingItemServiceTest {
     void viewingTheListDoesNotRefreshDates() {
         Instant oldDate = now.minus(6, ChronoUnit.DAYS);
 
-        ShoppingItem item = new ShoppingItem(
-                "Bread", 1, oldDate);
+        ShoppingItem item = new ShoppingItem("Bread", 1, oldDate);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        when(repository.findAllByOrderByUpdatedAtDesc())
-                .thenReturn(List.of(item));
+        when(repository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(item)));
 
-        List<ShoppingItem> result = service.getItems();
+        Page<ShoppingItemResponse> result = service.getItems(pageable);
 
-        assertEquals(1, result.size());
-        assertEquals(oldDate, result.get(0).getUpdatedAt());
+        assertEquals(1, result.getContent().size());
+        assertEquals(oldDate, result.getContent().get(0).updatedAt());
 
         verify(repository, never()).save(any(ShoppingItem.class));
     }

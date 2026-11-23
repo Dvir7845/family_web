@@ -4,7 +4,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +14,7 @@ public class ShoppingCleanupService {
     private final ShoppingItemRepository repository;
     private final Clock clock;
 
-    public ShoppingCleanupService(
-            ShoppingItemRepository repository,
-            Clock clock) {
+    public ShoppingCleanupService(ShoppingItemRepository repository, Clock clock) {
         this.repository = repository;
         this.clock = clock;
     }
@@ -25,8 +22,7 @@ public class ShoppingCleanupService {
     @Transactional
     @Scheduled(fixedDelay = 24, timeUnit = TimeUnit.HOURS)
     public void deleteExpiredItems() {
-        Instant cutoff = Instant.now(clock)
-                .minus(7, ChronoUnit.DAYS);
+        Instant cutoff = Instant.now(clock).minus(7, ChronoUnit.DAYS);
 
         repository.deleteExpiredItems(cutoff);
     }
