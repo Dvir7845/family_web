@@ -1,17 +1,18 @@
 package com.familyhome.member;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.constraints.NotNull;
 import java.security.Principal;
-
 import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PatchMapping;
-
 
 @RestController
 public class MemberController {
@@ -26,13 +27,13 @@ public class MemberController {
 
     @PostMapping("/members")
     @ResponseStatus(HttpStatus.CREATED)
-    public AssigneeOption createMember(
-            @Valid @RequestBody CreateMemberRequest request) {
+    public AssigneeOption createMember(@Valid @RequestBody CreateMemberRequest request) {
         return memberService.createMember(request);
     }
 
-    public record DriverRequest(@jakarta.validation.constraints.NotNull Boolean driver) {}
-    public record TaskManagerRequest(@jakarta.validation.constraints.NotNull Boolean taskManager) {}
+    public record DriverRequest(@NotNull Boolean driver) {}
+
+    public record TaskManagerRequest(@NotNull Boolean taskManager) {}
 
     @PatchMapping("/members/{id}/driver")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -42,10 +43,10 @@ public class MemberController {
 
     @PatchMapping("/members/{id}/task-manager")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changeTaskManager(@PathVariable Long id, @Valid @RequestBody TaskManagerRequest request) {
+    public void changeTaskManager(
+            @PathVariable Long id, @Valid @RequestBody TaskManagerRequest request) {
         memberService.changeTaskManager(id, request.taskManager());
     }
-    
 
     @PostMapping("/members/{id}/promote")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -61,11 +62,17 @@ public class MemberController {
 
     @PatchMapping("/me/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void changePassword(@Valid @RequestBody ChangePasswordRequest request, Principal principal,
-            jakarta.servlet.http.HttpServletRequest servletRequest, jakarta.servlet.http.HttpServletResponse servletResponse) {
+    public void changePassword(
+            @Valid @RequestBody ChangePasswordRequest request,
+            Principal principal,
+            HttpServletRequest servletRequest,
+            HttpServletResponse servletResponse) {
         accounts.changePassword(principal.getName(), request);
-        new org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler().logout(
-            servletRequest, servletResponse, org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication());
+        new SecurityContextLogoutHandler()
+                .logout(
+                        servletRequest,
+                        servletResponse,
+                        SecurityContextHolder.getContext().getAuthentication());
     }
 
     @GetMapping("/me")

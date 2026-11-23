@@ -3,17 +3,17 @@ package com.familyhome.security;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @Configuration
 @EnableMethodSecurity
@@ -25,11 +25,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(
-            AppUserRepository userRepository) {
+    public UserDetailsService userDetailsService(AppUserRepository userRepository) {
         return username -> {
-            AppUser appUser = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            AppUser appUser =
+                    userRepository
+                            .findByUsername(username)
+                            .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
             return User.withUsername(appUser.getUsername())
                     .password(appUser.getPasswordHash())
@@ -42,9 +43,10 @@ public class SecurityConfig {
     public CommandLineRunner createInitialUser(
             AppUserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            Environment environment) {
+            Environment environment,
+            @Value("${app.admin.username:admin}") String adminUsername) {
         return args -> {
-            if (userRepository.findByUsername("dvir").isPresent()) {
+            if (userRepository.existsByRole(Role.ADMIN)) {
                 return;
             }
 
@@ -55,10 +57,8 @@ public class SecurityConfig {
                         "Set APP_LOGIN_PASSWORD to create the initial user");
             }
 
-            AppUser user = new AppUser(
-                    "dvir",
-                    passwordEncoder.encode(password));
-                    
+            AppUser user = new AppUser(adminUsername, passwordEncoder.encode(password));
+
             user.changeRole(Role.ADMIN);
             userRepository.save(user);
         };
