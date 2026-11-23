@@ -112,8 +112,10 @@ class TaskServiceTest {
                         LocalDate.of(2026, 11, 8),
                         null);
 
-        TaskResponse result = service.createTask(request);
+        List<TaskResponse> results = service.createTask(request);
 
+        assertEquals(1, results.size());
+        TaskResponse result = results.getFirst();
         assertEquals("member", result.assigneeUsername());
         assertEquals("Shopping", result.name());
         assertFalse(result.completed());
@@ -181,7 +183,12 @@ class TaskServiceTest {
 
         TaskRequest request =
                 new TaskRequest(
-                        "New Cleaning", "Living Room", 3L, TaskType.WEEKLY, null, DayOfWeek.FRIDAY);
+                        "New Cleaning",
+                        "Living Room",
+                        3L,
+                        TaskType.WEEKLY,
+                        null,
+                        List.of(DayOfWeek.FRIDAY));
 
         TaskResponse updated = service.updateTask(11L, request);
 
@@ -215,7 +222,12 @@ class TaskServiceTest {
 
         TaskRequest weeklyRequest =
                 new TaskRequest(
-                        "Shopping", "Buy milk", 2L, TaskType.WEEKLY, null, DayOfWeek.SUNDAY);
+                        "Shopping",
+                        "Buy milk",
+                        2L,
+                        TaskType.WEEKLY,
+                        null,
+                        List.of(DayOfWeek.SUNDAY));
 
         assertThrows(
                 BusinessRuleException.class,

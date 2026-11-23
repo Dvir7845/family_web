@@ -41,7 +41,7 @@ public class TaskController {
 
     @PostMapping("/tasks")
     @ResponseStatus(HttpStatus.CREATED)
-    public TaskResponse createTask(@Valid @RequestBody TaskRequest request) { 
+    public List<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
         return taskService.createTask(request);
     }
 

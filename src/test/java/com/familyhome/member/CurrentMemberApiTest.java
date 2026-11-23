@@ -137,7 +137,7 @@ class CurrentMemberApiTest {
                                                 {
                                                   "name": "Shopping",
                                                   "type": "WEEKLY",
-                                                  "day": "SUNDAY",
+                                                  "days": ["SUNDAY"],
                                                   "description": "Buy milk",
                                                   "assigneeId": %d
                                                 }
@@ -148,7 +148,7 @@ class CurrentMemberApiTest {
                         .getResponse()
                         .getContentAsString();
 
-        Number taskId = JsonPath.read(response, "$.id");
+        Number taskId = JsonPath.read(response, "$[0].id");
 
         // another family member sees the shared weekly task
         mockMvc.perform(get("/tasks").with(httpBasic("viewer_member", "MemberPass123!")))

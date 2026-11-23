@@ -11,6 +11,7 @@ import com.familyhome.security.AuthService;
 import com.familyhome.security.SecurityConfig;
 import com.familyhome.shopping.ShoppingConfig;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,8 +67,10 @@ class TaskServiceSecurityTest {
                 new TaskRequest(
                         "Shopping", "Buy milk", 2L, TaskType.ONETIME, LocalDate.of(2026, 11, 8), null);
 
-        TaskResponse response = taskService.createTask(request);
+        List<TaskResponse> responses = taskService.createTask(request);
 
+        assertEquals(1, responses.size());
+        TaskResponse response = responses.getFirst();
         assertEquals("Shopping", response.name());
         assertEquals("member", response.assigneeUsername());
         verify(taskRepository).save(any(OneTimeTask.class));

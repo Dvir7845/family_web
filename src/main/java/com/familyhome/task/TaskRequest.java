@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.List;
 
 public record TaskRequest(
         @NotBlank String name,
@@ -12,4 +13,4 @@ public record TaskRequest(
         @NotNull @Positive Long assigneeId,
         @NotNull TaskType type,
         LocalDate taskDate,
-        DayOfWeek day) {}
+        List<@NotNull DayOfWeek> days) {}

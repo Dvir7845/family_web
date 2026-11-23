@@ -11,6 +11,7 @@ import {
 } from "../dates.js";
 import {
   $,
+  $$,
   actionButton,
   avatar,
   confirmAction,
@@ -119,14 +120,96 @@ export function filterAndSortTasks(
     );
 }
 
-export function syncTaskScheduleFields() {
+export function syncTaskScheduleFields(
+  isEdit = Boolean($("#taskForm")?.elements?.namedItem("id")?.value)
+) {
   const weekly = $("#taskType").value === "WEEKLY";
-  $("#taskDayField").hidden = !weekly;
+  const dayField = $("#taskDayField");
+  const selectWrap = $("#taskDaySelectWrap");
+  const daysGroup = $("#taskDaysGroup");
+  const daySelect = $("#taskDay");
+  const dateInput = $("#taskDate");
+
+  dayField.hidden = !weekly;
+  dayField.classList.toggle("full-width", weekly && !isEdit);
   $("#taskDateField").hidden = weekly;
-  $("#taskDay").disabled = !weekly;
-  $("#taskDay").required = weekly;
-  $("#taskDate").disabled = weekly;
-  $("#taskDate").required = !weekly;
+
+  dateInput.disabled = weekly;
+  dateInput.required = !weekly;
+
+  const useSingleSelect = weekly && isEdit;
+  selectWrap.hidden = !useSingleSelect;
+  daySelect.disabled = !useSingleSelect;
+  daySelect.required = useSingleSelect;
+
+  const useMultiDays = weekly && !isEdit;
+  daysGroup.hidden = !useMultiDays;
+  daysGroup.disabled = !useMultiDays;
+  $$('input[name="days"]', daysGroup).forEach(checkbox => {
+    checkbox.disabled = !useMultiDays;
+  });
+}
+
+export function buildTaskPayload({
+  id = "",
+  name = "",
+  description = "",
+  assigneeId,
+  type = "ONETIME",
+  taskDate = null,
+  singleDay = null,
+  selectedDays = []
+}) {
+  const trimmedName = String(name || "").trim();
+  const trimmedDescription = String(description || "").trim();
+  const numericAssigneeId = Number(assigneeId);
+
+  if (!["ONETIME", "WEEKLY"].includes(type)) {
+    throw new Error("צריך לבחור סוג משימה.");
+  }
+  if (!trimmedName) {
+    throw new Error("צריך למלא שם למשימה.");
+  }
+  if (!Number.isSafeInteger(numericAssigneeId) || numericAssigneeId <= 0) {
+    throw new Error("צריך לבחור אחראי למשימה.");
+  }
+
+  if (type === "ONETIME") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(taskDate || ""))) {
+      throw new Error("צריך לבחור תאריך למשימה.");
+    }
+    return {
+      name: trimmedName,
+      description: trimmedDescription,
+      assigneeId: numericAssigneeId,
+      type,
+      taskDate,
+      days: null
+    };
+  }
+
+  const isEdit = Boolean(id);
+  const days = isEdit
+    ? (DAY_VALUES.includes(singleDay) ? [singleDay] : [])
+    : [...new Set((selectedDays || []).filter(day => DAY_VALUES.includes(day)))];
+
+  if (!days.length) {
+    throw new Error(
+      isEdit ? "צריך לבחור יום בשבוע." : "צריך לבחור לפחות יום אחד בשבוע."
+    );
+  }
+  if (isEdit && days.length !== 1) {
+    throw new Error("בעדכון משימה שבועית אפשר לבחור יום אחד בלבד.");
+  }
+
+  return {
+    name: trimmedName,
+    description: trimmedDescription,
+    assigneeId: numericAssigneeId,
+    type,
+    taskDate: null,
+    days
+  };
 }
 
 export function renderWeeklyTasks(data = state.weeklyStats) {
@@ -606,8 +689,12 @@ export function openTask(task) {
   $("#taskDate").value = task?.taskDate || today;
   const todayDay = new Date(`${today}T00:00:00Z`).getUTCDay();
   const selectedDay = task ? dayIndex(task.day) : todayDay;
-  $("#taskDay").value = DAY_VALUES[selectedDay >= 0 ? selectedDay : todayDay];
-  syncTaskScheduleFields();
+  const defaultDayValue = DAY_VALUES[selectedDay >= 0 ? selectedDay : todayDay];
+  $("#taskDay").value = defaultDayValue;
+  $$('#taskDaysGroup input[name="days"]').forEach(checkbox => {
+    checkbox.checked = !task && checkbox.value === defaultDayValue;
+  });
+  syncTaskScheduleFields(Boolean(task));
 
   const select = $("#taskAssignee");
   select.replaceChildren(new Option("בחירת אחראי", ""));
@@ -631,43 +718,42 @@ export function openTask(task) {
 }
 
 export function initTasks({ onReload }) {
-  $("#taskType").addEventListener("change", syncTaskScheduleFields);
+  $("#taskType").addEventListener("change", () => syncTaskScheduleFields());
 
   handleForm($("#taskForm"), async form => {
     const id = form.elements.namedItem("id").value;
     const type = $("#taskType").value;
-    if (!["ONETIME", "WEEKLY"].includes(type)) {
-      throw new Error("צריך לבחור סוג משימה.");
-    }
     const existing =
       id && state.tasks.find(task => String(task.id) === String(id));
     if (existing && taskType(existing) !== type) {
       throw new Error("אי אפשר לשנות את סוג המשימה.");
     }
 
-    const body = {
-      name: $("#taskName").value.trim(),
-      description: $("#taskDescription").value.trim(),
-      assigneeId: Number($("#taskAssignee").value),
+    const selectedDays = $$('#taskDaysGroup input[name="days"]:checked').map(
+      checkbox => checkbox.value
+    );
+    const body = buildTaskPayload({
+      id,
+      name: $("#taskName").value,
+      description: $("#taskDescription").value,
+      assigneeId: $("#taskAssignee").value,
       type,
-      taskDate: type === "ONETIME" ? $("#taskDate").value : null,
-      day: type === "WEEKLY" ? $("#taskDay").value : null
-    };
+      taskDate: $("#taskDate").value,
+      singleDay: $("#taskDay").value,
+      selectedDays
+    });
 
-    if (!body.name) throw new Error("צריך למלא שם למשימה.");
-    if (!Number.isSafeInteger(body.assigneeId) || body.assigneeId <= 0) {
-      throw new Error("צריך לבחור אחראי למשימה.");
-    }
-    if (type === "ONETIME" && !/^\d{4}-\d{2}-\d{2}$/.test(body.taskDate)) {
-      throw new Error("צריך לבחור תאריך למשימה.");
-    }
-    if (type === "WEEKLY" && !DAY_VALUES.includes(body.day)) {
-      throw new Error("צריך לבחור יום בשבוע.");
-    }
-
-    await api(id ? `/tasks/${id}` : "/tasks", id ? "PUT" : "POST", body);
+    const result = await api(
+      id ? `/tasks/${id}` : "/tasks",
+      id ? "PUT" : "POST",
+      body
+    );
     $("#taskDialog").close();
-    notify(id ? "המשימה עודכנה." : "המשימה נוספה ללוח המשפחתי.");
+    if (!id && Array.isArray(result) && result.length > 1) {
+      notify(`נוספו ${result.length} משימות שבועיות ללוח המשפחתי.`);
+    } else {
+      notify(id ? "המשימה עודכנה." : "המשימה נוספה ללוח המשפחתי.");
+    }
     await onReload();
   });
 }

@@ -63,6 +63,25 @@ async function run() {
     }),
     "צריך למלא תיאור לאירוע."
   );
+  assert.deepEqual(
+    apiMod.errorMessage(400, {
+      detail: "At least one day of the week is required for weekly tasks"
+    }),
+    "צריך לבחור לפחות יום אחד בשבוע למשימה השבועית."
+  );
+  assert.deepEqual(
+    apiMod.errorMessage(400, {
+      detail: "Exactly one day of the week is required when updating a weekly task"
+    }),
+    "בעדכון משימה שבועית אפשר לבחור יום אחד בלבד."
+  );
+  assert.deepEqual(
+    apiMod.errorMessage(400, {
+      detail: "Days of the week should not be provided for one-time tasks"
+    }),
+    "למשימה חד־פעמית יש לבחור תאריך בלבד."
+  );
+
   for (const status of [400, 401, 403, 404, 409, 500]) {
     assert.ok(apiMod.errorMessage(status, null).length > 0);
   }
@@ -297,6 +316,74 @@ async function run() {
   assert.equal(danaRow.totalCount, 0);
   const unassignedRow = schedule.rows.find(r => r.isUnassigned);
   assert.equal(unassignedRow.cells[2][0].id, 4);
+
+  // tasks.buildTaskPayload (multi-day weekly create vs single-day weekly update)
+  assert.deepEqual(
+    tasksMod.buildTaskPayload({
+      name: "  שטיפה  ",
+      description: "  בסלון ",
+      assigneeId: "10",
+      type: "ONETIME",
+      taskDate: "2026-11-25"
+    }),
+    {
+      name: "שטיפה",
+      description: "בסלון",
+      assigneeId: 10,
+      type: "ONETIME",
+      taskDate: "2026-11-25",
+      days: null
+    }
+  );
+
+  assert.deepEqual(
+    tasksMod.buildTaskPayload({
+      name: "כביסה",
+      description: "",
+      assigneeId: "10",
+      type: "WEEKLY",
+      selectedDays: ["SUNDAY", "WEDNESDAY", "SUNDAY"]
+    }),
+    {
+      name: "כביסה",
+      description: "",
+      assigneeId: 10,
+      type: "WEEKLY",
+      taskDate: null,
+      days: ["SUNDAY", "WEDNESDAY"]
+    }
+  );
+
+  assert.throws(
+    () =>
+      tasksMod.buildTaskPayload({
+        name: "כביסה",
+        assigneeId: "10",
+        type: "WEEKLY",
+        selectedDays: []
+      }),
+    /לפחות יום אחד/
+  );
+
+  assert.deepEqual(
+    tasksMod.buildTaskPayload({
+      id: "42",
+      name: "כביסה",
+      description: "",
+      assigneeId: "10",
+      type: "WEEKLY",
+      singleDay: "FRIDAY",
+      selectedDays: ["SUNDAY", "WEDNESDAY"]
+    }),
+    {
+      name: "כביסה",
+      description: "",
+      assigneeId: 10,
+      type: "WEEKLY",
+      taskDate: null,
+      days: ["FRIDAY"]
+    }
+  );
 
   console.log("Frontend unit checks passed");
 }

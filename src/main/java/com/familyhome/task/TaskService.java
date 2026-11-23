@@ -8,6 +8,7 @@ import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.AssigneeOption;
 
 import java.time.Clock;
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.util.List;
 
@@ -58,33 +59,50 @@ public class TaskService {
 
     @Transactional
     @PreAuthorize("@auth.canManageTasks(authentication)")
-    public TaskResponse createTask(TaskRequest request) {
-        validateRequest(request);
+    public List<TaskResponse> createTask(TaskRequest request) {
+        validateRequest(request, false);
 
         AppUser user = findAssignee(request.assigneeId());
 
-        BaseTask task = switch (request.type()) {
-            case ONETIME ->
-                new OneTimeTask(
-                        request.name(),
-                        request.description(),
-                        user,
-                        request.taskDate());
-            case WEEKLY ->
-                new RecurringTask(
-                        request.name(), request.description(), user, request.day());
+        return switch (request.type()) {
+            case ONETIME -> {
+                OneTimeTask task =
+                        new OneTimeTask(
+                                request.name(),
+                                request.description(),
+                                user,
+                                request.taskDate());
+                yield List.of(TaskResponse.from(taskRepository.save(task)));
+            }
+            case WEEKLY -> {
+                List<RecurringTask> tasks =
+                        request.days().stream()
+                                .distinct()
+                                .map(
+                                        day ->
+                                                new RecurringTask(
+                                                        request.name(),
+                                                        request.description(),
+                                                        user,
+                                                        day))
+                                .toList();
+                yield taskRepository.saveAll(tasks).stream().map(TaskResponse::from).toList();
+            }
         };
-        return TaskResponse.from(taskRepository.save(task));
     }
 
     @Transactional
     @PreAuthorize("@auth.canManageTasks(authentication)")
     public TaskResponse updateTask(long id, TaskRequest request) {
-        validateRequest(request);
+        validateRequest(request, true);
         BaseTask task = getTaskById(id);
         AppUser user = findAssignee(request.assigneeId());
 
-        task.updateDetails(request.name(), request.description(), request.taskDate(), request.day());
+        DayOfWeek day =
+                (request.days() == null || request.days().isEmpty())
+                        ? null
+                        : request.days().getFirst();
+        task.updateDetails(request.name(), request.description(), request.taskDate(), day);
         task.assignOwner(user);
         return TaskResponse.from(taskRepository.save(task));
     }
@@ -123,18 +141,22 @@ public class TaskService {
                 .toList();
     }
 
-    private void validateRequest(TaskRequest request) {
+    private void validateRequest(TaskRequest request, boolean singleDayRequired) {
+        boolean hasDays = request.days() != null && !request.days().isEmpty();
         if (request.type() == TaskType.ONETIME && request.taskDate() == null) {
             throw new BusinessRuleException("Task date is required for one-time tasks");
         }
-        if (request.type() == TaskType.WEEKLY && request.day() == null) {
-            throw new BusinessRuleException("Day of the week is required for weekly tasks");
+        if (request.type() == TaskType.WEEKLY && !hasDays) {
+            throw new BusinessRuleException("At least one day of the week is required for weekly tasks");
+        }
+        if (request.type() == TaskType.WEEKLY && singleDayRequired && request.days().size() != 1) {
+            throw new BusinessRuleException("Exactly one day of the week is required when updating a weekly task");
         }
         if (request.type() == TaskType.WEEKLY && request.taskDate() != null) {
             throw new BusinessRuleException("Task date should not be provided for weekly tasks");
         }
-        if (request.type() == TaskType.ONETIME && request.day() != null) {
-            throw new BusinessRuleException("Day of the week should not be provided for one-time tasks");
+        if (request.type() == TaskType.ONETIME && hasDays) {
+            throw new BusinessRuleException("Days of the week should not be provided for one-time tasks");
         }
     }
 }

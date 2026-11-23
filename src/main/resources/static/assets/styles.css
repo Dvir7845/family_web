@@ -2227,6 +2227,75 @@ dialog {
   align-items: start;
 }
 
+#taskDayField.full-width {
+  grid-column: 1 / -1;
+}
+
+.task-days-fieldset {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #dfe5dc;
+  border-radius: 12px;
+  background: #fbfcf8;
+}
+
+.task-days-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 6px;
+}
+
+.day-picker {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.day-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  min-height: 40px;
+  border: 1px solid #dce4d8;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  transition: background .16s, border-color .16s, color .16s;
+}
+
+.day-chip:hover {
+  border-color: #9ab3a2;
+  background: #f5f9f4;
+}
+
+.day-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.day-chip:has(input:checked) {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.day-chip:has(input:focus-visible) {
+  outline: 3px solid #bc9166;
+  outline-offset: 2px;
+}
+
 /* Keep intrinsic content widths inside their layout containers. */
 .main-content,
 .board,
@@ -2798,6 +2867,10 @@ fieldset {
   .form-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+
+  .day-picker {
+    grid-template-columns: repeat(auto-fit, minmax(66px, 1fr));
   }
 
   .dialog-actions {

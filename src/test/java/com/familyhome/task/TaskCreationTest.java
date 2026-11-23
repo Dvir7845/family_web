@@ -31,6 +31,7 @@ class TaskCreationTest {
         when(users.findByUsername("admin")).thenReturn(Optional.of(admin));
         when(users.findById(2L)).thenReturn(Optional.of(member));
         when(tasks.save(any(BaseTask.class))).thenAnswer(call -> call.getArgument(0));
+        when(tasks.saveAll(anyIterable())).thenAnswer(call -> call.getArgument(0));
         SecurityContextHolder.getContext()
                 .setAuthentication(
                         new UsernamePasswordAuthenticationToken("admin", null, List.of()));
@@ -44,21 +45,32 @@ class TaskCreationTest {
     @Test
     void createsBothTaskTypesWithTheirScheduleAndOwner() {
         LocalDate date = LocalDate.of(2026, 11, 15);
-        TaskResponse once =
+        List<TaskResponse> onceList =
                 service.createTask(
                         new TaskRequest("Shopping", "Buy milk", 2L, TaskType.ONETIME, date, null));
-        TaskResponse weekly =
+        List<TaskResponse> weeklyList =
                 service.createTask(
                         new TaskRequest(
-                                "Cleaning", "Kitchen", 2L, TaskType.WEEKLY, null, DayOfWeek.SUNDAY));
+                                "Cleaning",
+                                "Kitchen",
+                                2L,
+                                TaskType.WEEKLY,
+                                null,
+                                List.of(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.SUNDAY)));
+
+        assertEquals(1, onceList.size());
+        TaskResponse once = onceList.getFirst();
         assertEquals(TaskType.ONETIME, once.type());
-        assertEquals(TaskType.WEEKLY, weekly.type());
         assertEquals(date, once.taskDate());
-        assertEquals(DayOfWeek.SUNDAY, weekly.day());
         assertEquals("member", once.assigneeUsername());
-        assertEquals("member", weekly.assigneeUsername());
         assertFalse(once.completed());
-        assertFalse(weekly.completed());
+
+        assertEquals(2, weeklyList.size());
+        assertEquals(TaskType.WEEKLY, weeklyList.get(0).type());
+        assertEquals(DayOfWeek.SUNDAY, weeklyList.get(0).day());
+        assertEquals(DayOfWeek.TUESDAY, weeklyList.get(1).day());
+        assertEquals("member", weeklyList.get(0).assigneeUsername());
+        assertFalse(weeklyList.get(0).completed());
     }
 
     @Test
@@ -67,20 +79,21 @@ class TaskCreationTest {
                 List.of(
                         new TaskRequest("Task", "", 2L, TaskType.ONETIME, null, null),
                         new TaskRequest("Task", "", 2L, TaskType.WEEKLY, null, null),
+                        new TaskRequest("Task", "", 2L, TaskType.WEEKLY, null, List.of()),
                         new TaskRequest(
                                 "Task",
                                 "",
                                 2L,
                                 TaskType.ONETIME,
                                 LocalDate.of(2026, 11, 15),
-                                DayOfWeek.SUNDAY),
+                                List.of(DayOfWeek.SUNDAY)),
                         new TaskRequest(
                                 "Task",
                                 "",
                                 2L,
                                 TaskType.WEEKLY,
                                 LocalDate.of(2026, 11, 15),
-                                DayOfWeek.SUNDAY))) {
+                                List.of(DayOfWeek.SUNDAY)))) {
             assertThrows(BusinessRuleException.class, () -> service.createTask(request));
         }
         verifyNoInteractions(tasks);
