@@ -57,5 +57,7 @@ document.querySelector("#togglePassword").addEventListener("click", event => {
   input.type = visible ? "text" : "password";
   event.currentTarget.setAttribute("aria-pressed", String(visible));
   event.currentTarget.setAttribute("aria-label", visible ? "הסתרת הסיסמה" : "הצגת הסיסמה");
+  const icon = document.querySelector("#togglePasswordIcon");
+  if (icon) icon.setAttribute("href", visible ? "/assets/icons.svg#eye-off" : "/assets/icons.svg#eye");
 });
 window.addEventListener("pageshow", prepareLogin);

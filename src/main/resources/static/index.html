@@ -8,7 +8,7 @@
   <title>ביחד בבית · הלוח המשפחתי</title>
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/styles.css">
-  <script src="/assets/app.js" defer></script>
+  <script type="module" src="/assets/app.js"></script>
 </head>
 
 <body class="app-page">
@@ -26,12 +26,14 @@
         </svg><span>רשימת קניות</span><span id="navShoppingCount" class="nav-count">—</span></button>
       <button class="nav-item" data-view="events" type="button">
         <svg class="icon">
-          <use href="/assets/icons.svg#clock"></use>
+          <use href="/assets/icons.svg#calendar"></use>
         </svg>
         <span>אירועים משפחתיים</span>
         <span id="navEventCount" class="nav-count">—</span>
       </button>
-      <button id="vehicleNavigation" class="nav-item" data-view="vehicles" type="button" hidden>מי משתמש ברכב</button>
+      <button id="vehicleNavigation" class="nav-item" data-view="vehicles" type="button" hidden><svg class="icon">
+          <use href="/assets/icons.svg#car"></use>
+        </svg><span>מי משתמש ברכב</span></button>
     </nav>
     <div id="adminNavigation" class="admin-navigation" hidden><span class="sidebar-label">ניהול המשפחה</span><button
         id="openMembers" class="nav-item" type="button" aria-label="ניהול בני המשפחה" title="ניהול בני המשפחה"><svg
@@ -41,7 +43,9 @@
     <div class="sidebar-note"><svg class="icon">
         <use href="/assets/icons.svg#home"></use>
       </svg><strong>כל אחד עושה קצת.</strong><span>ביחד זה עושה הבדל.</span></div>
-    <button id="openPassword" class="nav-item" type="button">שינוי סיסמה</button>
+    <button id="openPassword" class="nav-item" type="button"><svg class="icon">
+        <use href="/assets/icons.svg#key"></use>
+      </svg><span>שינוי סיסמה</span></button>
     <div class="account-block"><span id="userAvatar" class="avatar">·</span>
       <div class="account-info"><b id="currentUsername">מתחברים…</b><span id="currentRole">החשבון שלך</span></div>
       <button id="logoutButton" class="icon-button" type="button" aria-label="יציאה מהחשבון" title="יציאה מהחשבון"><svg
@@ -90,6 +94,27 @@
       <div class="weekly-chart-scroll" tabindex="0" role="region" aria-label="גרף עמודות: משימות שהושלמו השבוע לכל בן משפחה"><ul id="weeklyTaskChart" class="weekly-task-chart"></ul></div>
       <p class="weekly-task-note">ראשון עד שבת · לפי שעון ישראל · גביע לכל המובילים בשוויון</p>
     </section>
+    <section id="weeklySchedulePanel" class="weekly-schedule-panel" aria-labelledby="weeklyScheduleTitle" hidden>
+      <div class="weekly-schedule-heading">
+        <div>
+          <span class="eyebrow">מבט שבועי על הבית</span>
+          <h2 id="weeklyScheduleTitle">משימות השבוע לפי בני הבית</h2>
+          <p id="weeklyScheduleDates" class="muted"></p>
+        </div>
+        <div class="weekly-schedule-legend" aria-label="מקרא סוגי משימות">
+          <span class="legend-chip recurring">חוזרת</span>
+          <span class="legend-chip onetime">חד־פעמית</span>
+          <span class="legend-chip done">הושלמה</span>
+        </div>
+      </div>
+      <div id="weeklyScheduleScroll" class="weekly-schedule-scroll" tabindex="0" role="region" aria-label="טבלת משימות שבועית לפי ימים ובני בית">
+        <table class="weekly-schedule-table">
+          <thead id="weeklyScheduleHead"></thead>
+          <tbody id="weeklyScheduleBody"></tbody>
+        </table>
+      </div>
+      <p id="weeklyScheduleEmpty" class="muted weekly-schedule-empty" hidden>אין משימות משובצות לשבוע הנוכחי.</p>
+    </section>
     <p id="pageError" class="notice" role="alert" hidden></p>
     <section class="board" aria-labelledby="boardTitle">
       <div class="board-heading">
@@ -121,11 +146,32 @@
             <option value="4">חמישי</option>
             <option value="5">שישי</option>
             <option value="6">שבת</option>
-          </select></div>
+          </select><button id="clearFiltersButton" class="button button-quiet clear-filters-button" type="button" hidden>ניקוי סינון</button></div>
       </div>
       <section id="vehicleBoard" hidden aria-label="לוח רכבים חודשי">
-        <div class="vehicle-toolbar"><label for="vehicleMonth">חודש</label><input id="vehicleMonth" type="month" min="0001-01" max="9999-12"><label for="vehicleSelect">רכב</label><select id="vehicleSelect"></select></div>
-        <div class="vehicle-admin-actions"><button id="deleteVehicle" class="button button-danger" type="button" hidden>מחיקת הרכב הנבחר</button></div>
+        <div class="vehicle-toolbar">
+          <div class="vehicle-month-group">
+            <label for="vehicleMonth">חודש</label>
+            <div class="vehicle-month-nav">
+              <button id="vehiclePrevMonth" class="icon-button" type="button" aria-label="חודש קודם" title="חודש קודם"><svg class="icon"><use href="/assets/icons.svg#chevron-right"></use></svg></button>
+              <input id="vehicleMonth" type="month" min="0001-01" max="9999-12">
+              <button id="vehicleNextMonth" class="icon-button" type="button" aria-label="חודש הבא" title="חודש הבא"><svg class="icon"><use href="/assets/icons.svg#chevron-left"></use></svg></button>
+              <button id="vehicleTodayMonth" class="button button-secondary button-compact" type="button">החודש</button>
+            </div>
+          </div>
+          <div class="vehicle-select-group">
+            <label for="vehicleSelect">רכב</label>
+            <select id="vehicleSelect"></select>
+          </div>
+        </div>
+        <div class="vehicle-meta-bar">
+          <div class="vehicle-legend" aria-label="מקרא משבצות">
+            <span class="legend-item"><span class="legend-swatch free" aria-hidden="true"></span>פנוי</span>
+            <span class="legend-item"><span class="legend-swatch mine" aria-hidden="true"></span>הזמנה שלי</span>
+            <span class="legend-item"><span class="legend-swatch booked" aria-hidden="true"></span>מוזמן ע״י אחר</span>
+          </div>
+          <div class="vehicle-admin-actions"><button id="deleteVehicle" class="button button-danger" type="button" hidden>מחיקת הרכב הנבחר</button></div>
+        </div>
         <p id="vehicleEmpty" class="muted" hidden>עדיין אין רכבים. מנהל שהוא נהג יכול להוסיף רכב.</p>
         <div class="vehicle-calendar-scroll"><div id="vehicleCalendar" class="vehicle-calendar"></div></div>
       </section>
@@ -244,6 +290,10 @@
 
       <fieldset>
         <legend>מי מוזמן?</legend>
+        <div class="invitee-actions">
+          <button id="selectAllInvitees" class="text-button" type="button">בחירת כולם</button>
+          <button id="clearAllInvitees" class="text-button" type="button">ניקוי בחירה</button>
+        </div>
         <div id="eventInvitees"></div>
       </fieldset>
 
@@ -262,7 +312,10 @@
 
   <dialog id="passwordDialog" class="form-dialog" aria-labelledby="passwordDialogTitle">
     <form id="passwordForm">
-      <h2 id="passwordDialogTitle">שינוי הסיסמה שלי</h2>
+      <div class="dialog-header">
+        <div><span class="eyebrow">אבטחת החשבון</span><h2 id="passwordDialogTitle">שינוי הסיסמה שלי</h2></div>
+        <button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button>
+      </div>
       <label for="currentPassword">סיסמה נוכחית</label><input id="currentPassword" type="password" autocomplete="current-password" maxlength="72" required>
       <label for="newPassword">סיסמה חדשה</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required>
       <label for="confirmPassword">אימות הסיסמה החדשה</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="72" required>
@@ -297,7 +350,13 @@
   </dialog>
 
   <dialog id="vehicleDialog" class="form-dialog" aria-labelledby="vehicleDialogTitle">
-    <form id="vehicleForm"><h2 id="vehicleDialogTitle">הוספת רכב</h2><label for="vehicleName">שם הרכב / מספר רישוי</label><input id="vehicleName" maxlength="100" required><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">שמירה</button><button class="button button-secondary" type="button" data-close>ביטול</button></div></form>
+    <form id="vehicleForm">
+      <div class="dialog-header">
+        <div><span class="eyebrow">רכבים משפחתיים</span><h2 id="vehicleDialogTitle">הוספת רכב</h2></div>
+        <button class="icon-button" data-close type="button" aria-label="סגירה"><svg class="icon"><use href="/assets/icons.svg#close"></use></svg></button>
+      </div>
+      <label for="vehicleName">שם הרכב / מספר רישוי</label><input id="vehicleName" maxlength="100" required><p class="form-error notice" role="alert" hidden></p><div class="dialog-actions"><button class="button button-primary" type="submit">שמירה</button><button class="button button-secondary" type="button" data-close>ביטול</button></div>
+    </form>
   </dialog>
   <dialog id="confirmDialog" class="form-dialog confirm-dialog" aria-labelledby="confirmTitle">
     <form id="confirmForm" method="dialog">

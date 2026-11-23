@@ -15,4 +15,11 @@
   <symbol id="arrow" viewBox="0 0 24 24"><path d="M19 12H5m6-6-6 6 6 6"/></symbol>
   <symbol id="eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="spark" viewBox="0 0 24 24"><path d="m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5Z"/></symbol>
+  <symbol id="calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></symbol>
+  <symbol id="car" viewBox="0 0 24 24"><path d="M5 17h14v-5l-2.2-5A2 2 0 0 0 15 6H9a2 2 0 0 0-1.8 1L5 12Zm0 0v2m14-2v2M7.5 14.5h.01M16.5 14.5h.01"/></symbol>
+  <symbol id="key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3M18 5l2.5 2.5"/></symbol>
+  <symbol id="eye-off" viewBox="0 0 24 24"><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10.4 10.4 0 0 1 12 5c6 0 10 7 10 7a18 18 0 0 1-3.2 4.1M6.6 6.6A18.3 18.3 0 0 0 2 12s4 7 10 7a10 10 0 0 0 5.4-1.6M3 3l18 18"/></symbol>
+  <symbol id="chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
 </svg>
