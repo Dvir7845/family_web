@@ -42,3 +42,4 @@ build/
 /backups/
 *.dump
 *.backup
+IMPROVEMENT_PLAN.md
