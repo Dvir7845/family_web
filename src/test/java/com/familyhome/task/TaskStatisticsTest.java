@@ -21,7 +21,7 @@ class TaskStatisticsTest {
         when(b.getUsername()).thenReturn("bob");
         when(users.findAll()).thenReturn(List.of(a, b));
         OneTimeTask task = new OneTimeTask("Task", "", null, LocalDate.of(2026, 11, 8));
-        task.markAsCompleted("alice");
+        task.markAsCompleted("alice", Instant.parse("2026-11-08T10:00:00Z"));
         Instant start = Instant.parse("2026-11-07T22:00:00Z"),
                 end = Instant.parse("2026-11-14T22:00:00Z");
         when(tasks.findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(start, end))
@@ -38,10 +38,9 @@ class TaskStatisticsTest {
     void repeatedCompletionAndReassignmentPreserveOriginalCredit() {
         OneTimeTask task = new OneTimeTask("Task", "", null, LocalDate.of(2026, 11, 8));
         Instant first = Instant.parse("2026-11-08T10:00:00Z");
-        task.markAsCompleted("alice");
-        first = task.getCompletedAt();
+        task.markAsCompleted("alice", first);
         task.assignOwner(new AppUser("bob", "unused"));
-        task.markAsCompleted("bob");
+        task.markAsCompleted("bob", Instant.parse("2026-11-08T11:00:00Z"));
         assertEquals(first, task.getCompletedAt());
         assertEquals("alice", task.getCompletedByUsername());
     }

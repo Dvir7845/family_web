@@ -24,7 +24,7 @@ public class ShoppingItemService {
     }
 
     public Page<ShoppingItemResponse> getItems(Pageable pageable) {
-        return repository.findAll(pageable).map(ShoppingItemResponse::from);
+        return repository.findAllByOrderByUpdatedAtDesc(pageable).map(ShoppingItemResponse::from);
     }
 
     public ShoppingItemResponse getItem(long id) {

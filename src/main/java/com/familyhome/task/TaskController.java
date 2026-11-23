@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,9 @@ public class TaskController {
     }
 
     @GetMapping("/tasks")
-    public Page<TaskResponse> getTasks(@PageableDefault(size = 50) Pageable pageable) {
+    public Page<TaskResponse> getTasks(
+            @PageableDefault(size = 50, sort = "id", direction = Sort.Direction.ASC)
+                    Pageable pageable) {
         return taskService.getTasks(pageable);
     }
 

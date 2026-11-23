@@ -9,6 +9,7 @@ import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
 import com.familyhome.security.AuthService;
 import com.familyhome.security.SecurityConfig;
+import com.familyhome.shopping.ShoppingConfig;
 import java.time.LocalDate;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {SecurityConfig.class, AuthService.class, TaskService.class})
+@ContextConfiguration(
+        classes = {SecurityConfig.class, AuthService.class, TaskService.class, ShoppingConfig.class})
 class TaskServiceSecurityTest {
 
     @Autowired

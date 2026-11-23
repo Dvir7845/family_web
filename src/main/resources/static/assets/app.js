@@ -1,4 +1,4 @@
-import { api, getCsrf, unwrapList } from "./js/api.js";
+import { LIST_PAGE_SIZE, api, getCsrf, unwrapList, unwrapPage } from "./js/api.js";
 import { formatHeaderToday, formatSyncTime } from "./js/dates.js";
 import {
   $,
@@ -50,13 +50,14 @@ async function loadData(initial = false) {
 
   try {
     const user = await api("/me");
-    const [tasks, shopping, assignees, events, weeklyStats] = await Promise.all([
-      api("/tasks"),
-      api("/shopping-items"),
-      api("/members"),
-      api("/events"),
-      api("/tasks/statistics/weekly")
-    ]);
+    const [tasksPayload, shoppingPayload, assignees, eventsPayload, weeklyStats] =
+      await Promise.all([
+        api(`/tasks?size=${LIST_PAGE_SIZE}`),
+        api(`/shopping-items?size=${LIST_PAGE_SIZE}`),
+        api("/members"),
+        api(`/events?size=${LIST_PAGE_SIZE}`),
+        api("/tasks/statistics/weekly")
+      ]);
 
     state.user = user;
     $("#vehicleNavigation").hidden = !canUseVehicles(user);
@@ -76,12 +77,22 @@ async function loadData(initial = false) {
       state.bookings = [];
     }
 
+    const tasksPage = unwrapPage(tasksPayload);
+    const shoppingPage = unwrapPage(shoppingPayload);
+    const eventsPage = unwrapPage(eventsPayload);
+
     state.weeklyStats = weeklyStats;
-    state.tasks = unwrapList(tasks);
-    state.shopping = unwrapList(shopping);
+    state.tasks = tasksPage.items;
+    state.shopping = shoppingPage.items;
     state.assignees = unwrapList(assignees);
-    state.events = unwrapList(events);
+    state.events = eventsPage.items;
     state.loaded = true;
+
+    if (tasksPage.truncated || shoppingPage.truncated || eventsPage.truncated) {
+      showPageError({
+        message: `חלק מהרשימות מכילות יותר מ־${LIST_PAGE_SIZE} פריטים — מוצגים ${LIST_PAGE_SIZE} הפריטים הראשונים בלבד.`
+      });
+    }
 
     $("#currentUsername").textContent = user.username;
     $("#currentRole").textContent = isAdmin(user)

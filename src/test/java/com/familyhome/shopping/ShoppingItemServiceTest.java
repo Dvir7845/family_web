@@ -68,7 +68,8 @@ class ShoppingItemServiceTest {
         ShoppingItem item = new ShoppingItem("Bread", 1, oldDate);
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(repository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(item)));
+        when(repository.findAllByOrderByUpdatedAtDesc(pageable))
+                .thenReturn(new PageImpl<>(List.of(item)));
 
         Page<ShoppingItemResponse> result = service.getItems(pageable);
 

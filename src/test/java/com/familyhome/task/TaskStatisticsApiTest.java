@@ -51,8 +51,7 @@ class TaskStatisticsApiTest {
             OneTimeTask task =
                     new OneTimeTask("Count boundaries", "", null, LocalDate.of(2026, 11, 8));
             task.assignOwner(bob);
-            task.markAsCompleted("alice");
-            ReflectionTestUtils.setField(task, "completedAt", instant);
+            task.markAsCompleted("alice", instant);
             tasks.saveAndFlush(task);
         }
         mvc.perform(get("/tasks/statistics/weekly").with(user("bob")))

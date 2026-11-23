@@ -7,6 +7,8 @@ import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.AssigneeOption;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -22,10 +24,13 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final AppUserRepository userRepository;
+    private final Clock clock;
 
-    public TaskService(TaskRepository taskRepository, AppUserRepository userRepository) {
+    public TaskService(
+            TaskRepository taskRepository, AppUserRepository userRepository, Clock clock) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
+        this.clock = clock;
     }
 
     private AppUser getCurrentUser() {
@@ -99,7 +104,7 @@ public class TaskService {
                 .findByIdAndOwnerId(id, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found among your assignments"));
 
-        task.markAsCompleted(user.getUsername());
+        task.markAsCompleted(user.getUsername(), Instant.now(clock));
 
         return TaskResponse.from(taskRepository.save(task));
     }

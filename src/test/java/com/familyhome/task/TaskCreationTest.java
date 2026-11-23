@@ -7,6 +7,7 @@ import com.familyhome.exception.BusinessRuleException;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 class TaskCreationTest {
     private final TaskRepository tasks = mock(TaskRepository.class);
     private final AppUserRepository users = mock(AppUserRepository.class);
-    private final TaskService service = new TaskService(tasks, users);
+    private final TaskService service = new TaskService(tasks, users, Clock.systemUTC());
     private final AppUser member = new AppUser("member", "unused");
 
     @BeforeEach

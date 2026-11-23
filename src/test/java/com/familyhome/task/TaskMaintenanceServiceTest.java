@@ -25,7 +25,7 @@ class TaskMaintenanceServiceTest {
         LocalDate today = LocalDate.of(2030, 3, 10);
 
         OneTimeTask completedOneTime = new OneTimeTask("Done once", "", owner, today.plusDays(7));
-        completedOneTime.markAsCompleted("member");
+        completedOneTime.markAsCompleted("member", Instant.parse("2030-03-09T12:00:00Z"));
 
         OneTimeTask expiredOneTime = new OneTimeTask("Overdue once", "", owner, today.minusDays(1));
         OneTimeTask dueToday = new OneTimeTask("Due today", "", owner, today);
@@ -33,7 +33,7 @@ class TaskMaintenanceServiceTest {
 
         RecurringTask completedRecurring =
                 new RecurringTask("Done weekly", "", owner, DayOfWeek.SUNDAY);
-        completedRecurring.markAsCompleted("member");
+        completedRecurring.markAsCompleted("member", Instant.parse("2030-03-09T12:00:00Z"));
         RecurringTask openRecurring = new RecurringTask("Open weekly", "", owner, DayOfWeek.MONDAY);
 
         when(taskRepository.findAll())
@@ -64,11 +64,11 @@ class TaskMaintenanceServiceTest {
         AppUser owner = new AppUser("member", "unused");
 
         RecurringTask completedRecurring = new RecurringTask("Weekly", "", owner, DayOfWeek.SUNDAY);
-        completedRecurring.markAsCompleted("member");
+        completedRecurring.markAsCompleted("member", Instant.parse("2026-11-15T12:00:00Z"));
 
         OneTimeTask completedOneTime =
                 new OneTimeTask("Once", "", owner, LocalDate.of(2026, 11, 15));
-        completedOneTime.markAsCompleted("member");
+        completedOneTime.markAsCompleted("member", Instant.parse("2026-11-15T12:00:00Z"));
 
         when(taskRepository.findAll()).thenReturn(List.of(completedRecurring, completedOneTime));
 

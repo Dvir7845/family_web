@@ -68,10 +68,35 @@ export function errorMessage(status, data) {
   return STATUS_MESSAGES[status] || "לא הצלחנו להשלים את הפעולה. נסו שוב בעוד רגע.";
 }
 
+export const LIST_PAGE_SIZE = 500;
+
+export function unwrapPage(payload) {
+  if (Array.isArray(payload)) {
+    return {
+      items: payload,
+      totalPages: 1,
+      totalElements: payload.length,
+      truncated: false
+    };
+  }
+  if (Array.isArray(payload?.content)) {
+    const totalPages =
+      Number(payload.totalPages ?? payload.page?.totalPages ?? 1) || 1;
+    const totalElements = Number(
+      payload.totalElements ?? payload.page?.totalElements ?? payload.content.length
+    );
+    return {
+      items: payload.content,
+      totalPages,
+      totalElements,
+      truncated: totalPages > 1
+    };
+  }
+  return { items: [], totalPages: 1, totalElements: 0, truncated: false };
+}
+
 export function unwrapList(payload) {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.content)) return payload.content;
-  return [];
+  return unwrapPage(payload).items;
 }
 
 export async function getCsrf() {

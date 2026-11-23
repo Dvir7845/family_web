@@ -71,6 +71,28 @@ async function run() {
   assert.deepEqual(apiMod.unwrapList({ content: [3, 4] }), [3, 4]);
   assert.deepEqual(apiMod.unwrapList(null), []);
 
+  assert.deepEqual(apiMod.unwrapPage({ content: [1, 2], totalPages: 1, totalElements: 2 }), {
+    items: [1, 2],
+    totalPages: 1,
+    totalElements: 2,
+    truncated: false
+  });
+  assert.deepEqual(apiMod.unwrapPage({ content: [1], totalPages: 3, totalElements: 1200 }), {
+    items: [1],
+    totalPages: 3,
+    totalElements: 1200,
+    truncated: true
+  });
+  assert.deepEqual(
+    apiMod.unwrapPage({ content: [1], page: { totalPages: 2, totalElements: 600 } }),
+    {
+      items: [1],
+      totalPages: 2,
+      totalElements: 600,
+      truncated: true
+    }
+  );
+
   // tasks.js
   const user = { id: 10, username: "dvir", role: "ADMIN" };
   const assignees = [

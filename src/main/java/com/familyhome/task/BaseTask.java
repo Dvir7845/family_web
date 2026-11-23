@@ -119,10 +119,10 @@ public abstract class BaseTask {
         this.owner = owner;
     }
 
-    public void markAsCompleted(String completedByUsername) {
+    public void markAsCompleted(String completedByUsername, Instant completedAt) {
         if (this.completed) return;
         this.completed = true;
-        this.completedAt = Instant.now();
+        this.completedAt = completedAt;
         this.completedByUsername = completedByUsername;
     }
 

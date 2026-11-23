@@ -3,6 +3,7 @@ package com.familyhome.event;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,7 +24,9 @@ public class EventController {
     }
 
     @GetMapping("/events")
-    public Page<EventResponse> getEvents(@PageableDefault(size = 50) Pageable pageable) {
+    public Page<EventResponse> getEvents(
+            @PageableDefault(size = 50, sort = "eventDate", direction = Sort.Direction.ASC)
+                    Pageable pageable) {
         return eventService.getEvents(pageable);
     }
 
