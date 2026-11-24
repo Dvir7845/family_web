@@ -4,10 +4,13 @@ import com.familyhome.exception.BusinessRuleException;
 import com.familyhome.exception.ConflictException;
 import com.familyhome.exception.ForbiddenOperationException;
 import com.familyhome.exception.ResourceNotFoundException;
-import com.familyhome.member.*;
+import com.familyhome.member.AppUser;
+import com.familyhome.member.Role;
 import com.familyhome.security.AuthService;
-
-import java.time.*;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -77,12 +80,13 @@ public class VehicleService {
                 vehicles.findById(vehicleId)
                         .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
         try {
-            return BookingResponse.from(bookings.saveAndFlush(new VehicleBooking(vehicle, user, date, slot)));
+            return BookingResponse.from(
+                    bookings.saveAndFlush(new VehicleBooking(vehicle, user, date, slot)));
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException("Vehicle slot already booked");
         }
     }
-    
+
     @PreAuthorize("@auth.isDriver(authentication)")
     public void cancel(Long id) {
         AppUser user = driver();

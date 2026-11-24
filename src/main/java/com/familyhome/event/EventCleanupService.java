@@ -2,7 +2,6 @@ package com.familyhome.event;
 
 import java.time.Clock;
 import java.time.LocalDate;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

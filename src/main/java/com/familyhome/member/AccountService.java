@@ -7,7 +7,6 @@ import com.familyhome.exception.UnauthorizedOperationException;
 import com.familyhome.task.TaskRepository;
 import com.familyhome.vehicle.VehicleBookingRepository;
 import java.nio.charset.StandardCharsets;
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -48,11 +47,9 @@ public class AccountService {
                         .orElseThrow(() -> new UnauthorizedOperationException("User not found"));
         if (request.currentPassword().getBytes(StandardCharsets.UTF_8).length > 72
                 || !passwords.matches(request.currentPassword(), user.getPasswordHash()))
-            throw new BusinessRuleException(
-                    "Current password is incorrect");
+            throw new BusinessRuleException("Current password is incorrect");
         if (request.newPassword().getBytes(StandardCharsets.UTF_8).length > 72)
-            throw new BusinessRuleException(
-                    "Password exceeds the supported byte length");
+            throw new BusinessRuleException("Password exceeds the supported byte length");
         user.changePassword(passwords.encode(request.newPassword()));
         expireAfterCommit(username);
     }
@@ -62,11 +59,9 @@ public class AccountService {
     public void delete(Long id, String currentUsername) {
         AppUser user =
                 users.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException("User not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (user.getUsername().equals(currentUsername))
-            throw new BusinessRuleException(
-                    "Cannot delete your own account");
+            throw new BusinessRuleException("Cannot delete your own account");
         tasks.findAllByOwnerId(id).forEach(task -> task.assignOwner(null));
         events.findAll().forEach(event -> event.removeInvitedUser(user));
         bookings.deleteByUserId(id);
@@ -79,8 +74,7 @@ public class AccountService {
     public void promote(Long id) {
         AppUser user =
                 users.findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException("User not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         if (user.getRole() == Role.ADMIN) return;
         user.changeRole(Role.ADMIN);
         expireAfterCommit(user.getUsername());

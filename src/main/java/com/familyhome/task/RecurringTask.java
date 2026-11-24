@@ -16,8 +16,7 @@ public class RecurringTask extends BaseTask {
     @Enumerated(EnumType.STRING)
     private DayOfWeek day;
 
-    protected RecurringTask() {
-    }
+    protected RecurringTask() {}
 
     public RecurringTask(String name, String description, AppUser owner, DayOfWeek day) {
         super(name, description, owner);
@@ -27,8 +26,8 @@ public class RecurringTask extends BaseTask {
     public DayOfWeek getDay() {
         return day;
     }
-    
-    @Override 
+
+    @Override
     public void updateDetails(String name, String description, LocalDate taskDate, DayOfWeek day) {
         if (taskDate != null || day == null) {
             throw new BusinessRuleException("Cannot change task type");

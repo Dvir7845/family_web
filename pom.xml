@@ -103,6 +103,15 @@
 				<artifactId>spotless-maven-plugin</artifactId>
 				<version>3.11.0</version>
 				<configuration>
+				<executions>
+					<execution>
+					    <id>spotless-check</id>
+					    <phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 					<java>
 						<googleJavaFormat>
 							<version>2.0.0</version>

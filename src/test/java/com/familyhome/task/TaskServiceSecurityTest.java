@@ -4,10 +4,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.familyhome.config.TimeConfig;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
-import com.familyhome.member.Role;
-import com.familyhome.config.TimeConfig;
 import com.familyhome.security.AuthService;
 import com.familyhome.security.SecurityConfig;
 import java.time.LocalDate;
@@ -27,14 +26,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         classes = {SecurityConfig.class, AuthService.class, TaskService.class, TimeConfig.class})
 class TaskServiceSecurityTest {
 
-    @Autowired
-    private TaskService taskService;
+    @Autowired private TaskService taskService;
 
-    @MockitoBean
-    private TaskRepository taskRepository;
+    @MockitoBean private TaskRepository taskRepository;
 
-    @MockitoBean
-    private AppUserRepository userRepository;
+    @MockitoBean private AppUserRepository userRepository;
 
     @Test
     @WithMockUser(username = "member", roles = "MEMBER")
@@ -44,7 +40,12 @@ class TaskServiceSecurityTest {
 
         TaskRequest request =
                 new TaskRequest(
-                        "Shopping", "Buy milk", 2L, TaskType.ONETIME, LocalDate.of(2026, 11, 8), null);
+                        "Shopping",
+                        "Buy milk",
+                        2L,
+                        TaskType.ONETIME,
+                        LocalDate.of(2026, 11, 8),
+                        null);
 
         assertThrows(AccessDeniedException.class, () -> taskService.createTask(request));
         assertThrows(AccessDeniedException.class, () -> taskService.deleteTask(99L));
@@ -65,7 +66,12 @@ class TaskServiceSecurityTest {
 
         TaskRequest request =
                 new TaskRequest(
-                        "Shopping", "Buy milk", 2L, TaskType.ONETIME, LocalDate.of(2026, 11, 8), null);
+                        "Shopping",
+                        "Buy milk",
+                        2L,
+                        TaskType.ONETIME,
+                        LocalDate.of(2026, 11, 8),
+                        null);
 
         List<TaskResponse> responses = taskService.createTask(request);
 

@@ -13,7 +13,6 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -73,7 +72,7 @@ public abstract class BaseTask {
     public String getAssigneeUsername() {
         return owner == null ? null : owner.getUsername();
     }
-    
+
     public abstract TaskType getType();
 
     public LocalDate getTaskDate() {
@@ -113,7 +112,8 @@ public abstract class BaseTask {
         this.description = description;
     }
 
-    public abstract void updateDetails(String name, String description, LocalDate taskDate, DayOfWeek day);
+    public abstract void updateDetails(
+            String name, String description, LocalDate taskDate, DayOfWeek day);
 
     public void assignOwner(AppUser owner) {
         this.owner = owner;
@@ -131,6 +131,4 @@ public abstract class BaseTask {
     }
 
     public void resetWeeklyStatus() {}
-
-    
 }

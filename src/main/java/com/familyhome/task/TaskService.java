@@ -6,18 +6,15 @@ import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.AssigneeOption;
 import com.familyhome.security.AuthService;
-
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 public class TaskService {
@@ -28,13 +25,15 @@ public class TaskService {
     private final AuthService authService;
 
     public TaskService(
-            TaskRepository taskRepository, AppUserRepository userRepository, Clock clock, AuthService authService) {
+            TaskRepository taskRepository,
+            AppUserRepository userRepository,
+            Clock clock,
+            AuthService authService) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.clock = clock;
         this.authService = authService;
     }
-
 
     public Page<TaskResponse> getTasks(Pageable pageable) {
         return taskRepository.findAll(pageable).map(TaskResponse::from);
@@ -44,8 +43,7 @@ public class TaskService {
         return taskRepository
                 .findById(id)
                 .map(TaskResponse::from)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
     }
 
     @Transactional
@@ -59,23 +57,16 @@ public class TaskService {
             case ONETIME -> {
                 OneTimeTask task =
                         new OneTimeTask(
-                                request.name(),
-                                request.description(),
-                                user,
-                                request.taskDate());
+                                request.name(), request.description(), user, request.taskDate());
                 yield List.of(TaskResponse.from(taskRepository.save(task)));
             }
             case WEEKLY -> {
                 List<RecurringTask> tasks =
                         request.days().stream()
                                 .distinct()
-                                .map(
-                                        day ->
-                                                new RecurringTask(
-                                                        request.name(),
-                                                        request.description(),
-                                                        user,
-                                                        day))
+                                .map(day ->
+                                        new RecurringTask(
+                                                request.name(), request.description(), user, day))
                                 .toList();
                 yield taskRepository.saveAll(tasks).stream().map(TaskResponse::from).toList();
             }
@@ -109,9 +100,12 @@ public class TaskService {
     public TaskResponse completeTask(long id) {
         AppUser user = authService.requireCurrentUser();
 
-        BaseTask task = taskRepository
-                .findByIdAndOwnerId(id, user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found among your assignments"));
+        BaseTask task =
+                taskRepository
+                        .findByIdAndOwnerId(id, user.getId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Task not found among your assignments"));
 
         task.markAsCompleted(user.getUsername(), Instant.now(clock));
 
@@ -138,20 +132,25 @@ public class TaskService {
             throw new BusinessRuleException("Task date is required for one-time tasks");
         }
         if (request.type() == TaskType.WEEKLY && !hasDays) {
-            throw new BusinessRuleException("At least one day of the week is required for weekly tasks");
+            throw new BusinessRuleException(
+                    "At least one day of the week is required for weekly tasks");
         }
         if (request.type() == TaskType.WEEKLY && singleDayRequired && request.days().size() != 1) {
-            throw new BusinessRuleException("Exactly one day of the week is required when updating a weekly task");
+            throw new BusinessRuleException(
+                    "Exactly one day of the week is required when updating a weekly task");
         }
         if (request.type() == TaskType.WEEKLY && request.taskDate() != null) {
             throw new BusinessRuleException("Task date should not be provided for weekly tasks");
         }
         if (request.type() == TaskType.ONETIME && hasDays) {
-            throw new BusinessRuleException("Days of the week should not be provided for one-time tasks");
+            throw new BusinessRuleException(
+                    "Days of the week should not be provided for one-time tasks");
         }
     }
 
     private BaseTask findTask(long id) {
-        return taskRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        return taskRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
     }
 }

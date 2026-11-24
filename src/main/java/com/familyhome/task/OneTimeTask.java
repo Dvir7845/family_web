@@ -5,7 +5,6 @@ import com.familyhome.member.AppUser;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
@@ -16,8 +15,7 @@ public class OneTimeTask extends BaseTask {
     @Column(name = "task_date")
     private LocalDate taskDate;
 
-    protected OneTimeTask() {
-    }
+    protected OneTimeTask() {}
 
     public OneTimeTask(String name, String description, AppUser owner, LocalDate taskDate) {
         super(name, description, owner);

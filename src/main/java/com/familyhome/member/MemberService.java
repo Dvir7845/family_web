@@ -1,5 +1,9 @@
 package com.familyhome.member;
 
+import com.familyhome.exception.BusinessRuleException;
+import com.familyhome.exception.ConflictException;
+import com.familyhome.exception.ResourceNotFoundException;
+import com.familyhome.exception.UnauthorizedOperationException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -7,11 +11,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.familyhome.exception.BusinessRuleException;
-import com.familyhome.exception.ConflictException;
-import com.familyhome.exception.ResourceNotFoundException;
-import com.familyhome.exception.UnauthorizedOperationException;
 
 @Service
 public class MemberService {
@@ -53,8 +52,7 @@ public class MemberService {
         AppUser user =
                 userRepository
                         .findById(userId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException("User not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.changeTaskManager(taskManager);
     }
 
@@ -63,8 +61,7 @@ public class MemberService {
         AppUser user =
                 userRepository
                         .findByUsername(username)
-                        .orElseThrow(() ->
-                                new UnauthorizedOperationException("User not found"));
+                        .orElseThrow(() -> new UnauthorizedOperationException("User not found"));
 
         return new CurrentMemberResponse(
                 user.getId(),
@@ -80,8 +77,7 @@ public class MemberService {
         AppUser user =
                 userRepository
                         .findById(id)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException("User not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.changeDriver(driver);
     }
 

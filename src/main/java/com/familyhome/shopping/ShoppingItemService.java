@@ -1,16 +1,12 @@
 package com.familyhome.shopping;
 
+import com.familyhome.exception.ResourceNotFoundException;
 import java.time.Clock;
 import java.time.Instant;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-
-import com.familyhome.exception.ResourceNotFoundException;
 
 @Service
 public class ShoppingItemService {
@@ -31,8 +27,7 @@ public class ShoppingItemService {
         return repository
                 .findById(id)
                 .map(ShoppingItemResponse::from)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Shopping item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Shopping item not found"));
     }
 
     @Transactional
@@ -46,8 +41,11 @@ public class ShoppingItemService {
 
     @Transactional
     public ShoppingItemResponse updateItem(long id, ShoppingItemRequest request) {
-        ShoppingItem item = repository.findById(id).orElseThrow(() ->
-                new ResourceNotFoundException("Shopping item not found"));
+        ShoppingItem item =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException("Shopping item not found"));
 
         item.updateDetails(request.productName().trim(), request.quantity(), Instant.now(clock));
 

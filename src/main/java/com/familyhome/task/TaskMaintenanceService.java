@@ -2,7 +2,6 @@ package com.familyhome.task;
 
 import java.time.Clock;
 import java.time.LocalDate;
-
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +34,9 @@ public class TaskMaintenanceService {
     }
 
     @Transactional
-    @Scheduled(cron = "0 0 0 * * SUN", zone = "${app.time-zone:Asia/Jerusalem}") // Every Sunday at midnight
+    @Scheduled(
+            cron = "0 0 0 * * SUN",
+            zone = "${app.time-zone:Asia/Jerusalem}") // Every Sunday at midnight
     public void resetWeeklyTaskCompletionStatus() {
         for (BaseTask task : taskRepository.findAll()) {
             task.resetWeeklyStatus();
