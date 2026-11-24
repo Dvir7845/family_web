@@ -43,7 +43,7 @@ public class VehicleController {
     }
 
     @GetMapping("/bookings")
-    public List<VehicleService.BookingResponse> month(@RequestParam String month) {
+    public List<BookingResponse> month(@RequestParam String month) {
         YearMonth parsed;
         try {
             parsed = YearMonth.parse(month);
@@ -57,7 +57,7 @@ public class VehicleController {
 
     @PostMapping("/bookings")
     @ResponseStatus(HttpStatus.CREATED)
-    public VehicleService.BookingResponse book(@Valid @RequestBody BookingRequest request) {
+    public BookingResponse book(@Valid @RequestBody BookingRequest request) {
         return service.book(request.vehicleId(), request.date(), request.slot());
     }
 

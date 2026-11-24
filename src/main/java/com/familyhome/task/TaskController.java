@@ -36,7 +36,7 @@ public class TaskController {
 
     @GetMapping("/tasks/{id}")
     public TaskResponse getTaskById(@PathVariable long id) {
-        return TaskResponse.from(taskService.getTaskById(id));
+        return taskService.getTaskById(id);
     }
 
     @PostMapping("/tasks")

@@ -1,11 +1,12 @@
 package com.familyhome.security;
 
+import com.familyhome.exception.UnauthorizedOperationException;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
-
-import org.springframework.stereotype.Component;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
@@ -35,5 +36,10 @@ public class AuthService {
             return Optional.empty();
         }
         return userRepository.findByUsername(authentication.getName());
+    }
+
+    public AppUser requireCurrentUser(){
+        return currentUser(SecurityContextHolder.getContext().getAuthentication())
+                .orElseThrow(() -> new UnauthorizedOperationException("Authenticated user not found"));
     }
 }

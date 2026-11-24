@@ -9,6 +9,7 @@ import com.familyhome.exception.ResourceNotFoundException;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
+import com.familyhome.security.AuthService;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -31,7 +32,7 @@ class TaskServiceTest {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
 
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser user = mock(AppUser.class);
 
@@ -62,7 +63,7 @@ class TaskServiceTest {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
 
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser user = mock(AppUser.class);
 
@@ -84,7 +85,7 @@ class TaskServiceTest {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
 
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser admin = mock(AppUser.class);
         when(admin.getRole()).thenReturn(Role.ADMIN);
@@ -127,7 +128,7 @@ class TaskServiceTest {
     void adminCanUpdateOneTimeTaskDetailsDateAndAssignee() {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser admin = mock(AppUser.class);
         when(admin.getRole()).thenReturn(Role.ADMIN);
@@ -163,7 +164,7 @@ class TaskServiceTest {
     void adminCanUpdateRecurringTaskDetailsDayAndAssignee() {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser admin = mock(AppUser.class);
         when(admin.getRole()).thenReturn(Role.ADMIN);
@@ -204,7 +205,7 @@ class TaskServiceTest {
     void updateTaskRejectsMismatchedTaskTypeWithBadRequest() {
         TaskRepository taskRepository = mock(TaskRepository.class);
         AppUserRepository userRepository = mock(AppUserRepository.class);
-        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC());
+        TaskService service = new TaskService(taskRepository, userRepository, Clock.systemUTC(), new AuthService(userRepository));
 
         AppUser admin = mock(AppUser.class);
         when(admin.getRole()).thenReturn(Role.ADMIN);

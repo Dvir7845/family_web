@@ -5,11 +5,12 @@ import com.familyhome.exception.ConflictException;
 import com.familyhome.exception.ForbiddenOperationException;
 import com.familyhome.exception.ResourceNotFoundException;
 import com.familyhome.member.*;
+import com.familyhome.security.AuthService;
+
 import java.time.*;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,27 +19,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class VehicleService {
     private final VehicleRepository vehicles;
     private final VehicleBookingRepository bookings;
-    private final AppUserRepository users;
     private final Clock clock;
+    private final AuthService authService;
 
     public VehicleService(
             VehicleRepository vehicles,
             VehicleBookingRepository bookings,
-            AppUserRepository users,
-            Clock clock) {
+            Clock clock,
+            AuthService authService) {
         this.vehicles = vehicles;
         this.bookings = bookings;
-        this.users = users;
         this.clock = clock;
+        this.authService = authService;
     }
 
     private AppUser driver() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        AppUser user =
-                users.findByUsername(username)
-                        .orElseThrow(() -> new ForbiddenOperationException("User not found"));
-        if (!user.isDriver()) throw new ForbiddenOperationException("User is not a driver");
-        return user;
+        return authService.requireCurrentUser();
     }
 
     @Transactional(readOnly = true)
@@ -62,31 +58,13 @@ public class VehicleService {
         vehicles.delete(vehicle);
     }
 
-    public record BookingResponse(
-            Long id,
-            Long vehicleId,
-            Long userId,
-            String username,
-            LocalDate date,
-            VehicleBooking.Slot slot) {}
-
-    private BookingResponse response(VehicleBooking b) {
-        return new BookingResponse(
-                b.getId(),
-                b.getVehicle().getId(),
-                b.getUser().getId(),
-                b.getUser().getUsername(),
-                b.getDate(),
-                b.getSlot());
-    }
-
     @Transactional(readOnly = true)
     @PreAuthorize("@auth.isDriver(authentication)")
     public List<BookingResponse> month(YearMonth month) {
         return bookings
                 .findByDateBetweenOrderByDateAsc(month.atDay(1), month.atEndOfMonth())
                 .stream()
-                .map(this::response)
+                .map(BookingResponse::from)
                 .toList();
     }
 
@@ -99,7 +77,7 @@ public class VehicleService {
                 vehicles.findById(vehicleId)
                         .orElseThrow(() -> new ResourceNotFoundException("Vehicle not found"));
         try {
-            return response(bookings.saveAndFlush(new VehicleBooking(vehicle, user, date, slot)));
+            return BookingResponse.from(bookings.saveAndFlush(new VehicleBooking(vehicle, user, date, slot)));
         } catch (DataIntegrityViolationException ex) {
             throw new ConflictException("Vehicle slot already booked");
         }

@@ -210,15 +210,15 @@ Java code formatting is configured with Spotless (google-java-format AOSP):
 │   │   │   └── vehicle/         # Vehicles, booking slots & driver checks
 │   │   └── resources/
 │   │       ├── application.properties
-│   │       ├── db/migration/    # Flyway SQL migrations (V1__init.sql)
+│   │       ├── db/              # Flyway SQL migrations (migration/ + postgresql/)
 │   │       └── static/          # Hebrew RTL pages, CSS, and ES modules under assets/js/
 │   └── test/
 │       ├── java/                # Unit, JPA repository, security, and MockMvc API tests
 │       ├── js/                  # Node.js tests for ES modules & vehicle calendar
 │       └── resources/           # application-test.properties
+├── AGENTS.md                    # Engineering conventions for coding agents
 ├── docker-compose.yml           # PostgreSQL 17 + app container setup
 ├── Dockerfile                   # Multi-stage JDK 25 build -> JRE 25 runtime
-├── IMPROVEMENT_PLAN.md          # Engineering backlog & agent guidelines
 ├── pom.xml                      # Spring Boot 4.1.2, Flyway, Spotless
 └── start-server.ps1             # Local Windows runner prompting for DB_PASSWORD
 ```
@@ -227,8 +227,6 @@ Java code formatting is configured with Spotless (google-java-format AOSP):
 
 ## Roadmap
 
-Tracked in [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md):
-
-- **Correctness & Data Model:** Restore deterministic default sorting on `/shopping-items`, `/tasks`, and `/events`; handle pagination cleanly in the frontend; pass injected `Clock` into task completion; add Flyway migration path for legacy schemas; add DB indexes and length constraints.
-- **API & Architecture Polish:** Return DTOs (`VehicleResponse`, `BookingResponse`) from `VehicleController`; centralize current-user lookup in `AuthService` and timezone config in `TimeConfig`; use bulk JPQL updates/deletes in scheduled maintenance jobs.
+- **Architecture & Code Quality:** Enforce Spotless (`google-java-format`) in Maven `verify`, finish DTO mapping in `VehicleController`, centralize timezone and conditional scheduling config, replace load-all maintenance loops with bulk JPQL/SQL operations, and expand `GlobalExceptionHandler`.
+- **Data Model & Performance:** Add Flyway `V3` column nullability/length constraints aligned with validation, add indexes for foreign keys and date/completion queries, and prevent N+1 queries on paginated event listings with batch fetching.
 - **Developer Experience & Showcase:** GitHub Actions CI (`mvnw verify` + Node JS tests), OpenAPI / Swagger UI (`springdoc-openapi`), JaCoCo test coverage reporting, PostgreSQL Testcontainers integration test, and live demo deployment.

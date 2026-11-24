@@ -8,7 +8,7 @@ import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,8 @@ class TaskMaintenanceServiceTest {
     void deletesCompletedOrExpiredOneTimeTasksAndKeepsTodayAndFutureTasks() {
         TaskRepository taskRepository = mock(TaskRepository.class);
         // 2030-03-09 22:30 UTC is already 2030-03-10 00:30 in Asia/Jerusalem (UTC+2).
-        Clock clock = Clock.fixed(Instant.parse("2030-03-09T22:30:00Z"), ZoneOffset.UTC);
+        Clock clock =
+                Clock.fixed(Instant.parse("2030-03-09T22:30:00Z"), ZoneId.of("Asia/Jerusalem"));
         TaskMaintenanceService maintenanceService =
                 new TaskMaintenanceService(taskRepository, clock);
         AppUser owner = new AppUser("member", "unused");

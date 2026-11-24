@@ -2,10 +2,10 @@ package com.familyhome.task;
 
 import com.familyhome.exception.BusinessRuleException;
 import com.familyhome.exception.ResourceNotFoundException;
-import com.familyhome.exception.UnauthorizedOperationException;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.AssigneeOption;
+import com.familyhome.security.AuthService;
 
 import java.time.Clock;
 import java.time.DayOfWeek;
@@ -17,8 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.Authentication;
+
 
 @Service
 public class TaskService {
@@ -26,33 +25,25 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final AppUserRepository userRepository;
     private final Clock clock;
+    private final AuthService authService;
 
     public TaskService(
-            TaskRepository taskRepository, AppUserRepository userRepository, Clock clock) {
+            TaskRepository taskRepository, AppUserRepository userRepository, Clock clock, AuthService authService) {
         this.taskRepository = taskRepository;
         this.userRepository = userRepository;
         this.clock = clock;
+        this.authService = authService;
     }
 
-    private AppUser getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null) {
-            throw new UnauthorizedOperationException("Authentication required");
-        }
-
-        return userRepository
-                .findByUsername(authentication.getName())
-                .orElseThrow(() -> new UnauthorizedOperationException("User not found"));
-    }
 
     public Page<TaskResponse> getTasks(Pageable pageable) {
         return taskRepository.findAll(pageable).map(TaskResponse::from);
     }
 
-    public BaseTask getTaskById(long id) {
+    public TaskResponse getTaskById(long id) {
         return taskRepository
                 .findById(id)
+                .map(TaskResponse::from)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Task not found"));
     }
@@ -95,7 +86,7 @@ public class TaskService {
     @PreAuthorize("@auth.canManageTasks(authentication)")
     public TaskResponse updateTask(long id, TaskRequest request) {
         validateRequest(request, true);
-        BaseTask task = getTaskById(id);
+        BaseTask task = findTask(id);
         AppUser user = findAssignee(request.assigneeId());
 
         DayOfWeek day =
@@ -110,13 +101,13 @@ public class TaskService {
     @Transactional
     @PreAuthorize("@auth.canManageTasks(authentication)")
     public void deleteTask(long id) {
-        BaseTask task = getTaskById(id);
+        BaseTask task = findTask(id);
         taskRepository.delete(task);
     }
 
     @Transactional
     public TaskResponse completeTask(long id) {
-        AppUser user = getCurrentUser();
+        AppUser user = authService.requireCurrentUser();
 
         BaseTask task = taskRepository
                 .findByIdAndOwnerId(id, user.getId())
@@ -158,5 +149,9 @@ public class TaskService {
         if (request.type() == TaskType.ONETIME && hasDays) {
             throw new BusinessRuleException("Days of the week should not be provided for one-time tasks");
         }
+    }
+
+    private BaseTask findTask(long id) {
+        return taskRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Task not found"));
     }
 }

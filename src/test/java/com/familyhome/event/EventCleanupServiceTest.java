@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,7 +23,8 @@ class EventCleanupServiceTest {
     @Test
     void cleanupUsesIsraelDateAndKeepsBoundaryAndFutureEvents() {
         // In Israel this instant is already November 9.
-        Clock clock = Clock.fixed(Instant.parse("2026-11-08T22:30:00Z"), ZoneOffset.UTC);
+        Clock clock =
+                Clock.fixed(Instant.parse("2026-11-08T22:30:00Z"), ZoneId.of("Asia/Jerusalem"));
 
         // November 9 minus 30 days is October 10.
         Event expired = new Event("Expired event", LocalDate.of(2026, 10, 9), Set.of());

@@ -1,4 +1,21 @@
-/* Base & Theme */
+/* ==========================================================================
+   Family Home – Stylesheet Table of Contents
+   1. Base & Theme
+   2. Buttons & Controls
+   3. Sidebar & Shared Board
+   4. Stats Grid
+   5. Dialogs & Toast
+   6. Login
+   7. Responsive: Compact Desktop (<= 1150px)
+   8. Shopping Stepper, Events & Vehicles
+   9. Weekly Leaderboard
+   10. Weekly Schedule Matrix
+   11. Task Types & Multi-day Picker
+   12. Responsive: Tablet (<= 820px) & Mobile (<= 580px)
+   13. Reduced Motion
+   ========================================================================== */
+
+/* 1. Base & Theme */
 :root {
   --page: #f6f5f1;
   --paper: #fff;
@@ -924,12 +941,11 @@ tbody tr:hover {
   font-size: 13px;
 }
 
-.empty-state /* Buttons & Controls */
-.button {
+.empty-state .button {
   font-size: 13px;
 }
 
-/* Dialogs */
+/* 5. Dialogs & Toast */
 dialog {
   color: var(--ink);
 }
@@ -2479,14 +2495,12 @@ fieldset {
     font-size: 33px;
   }
 
-  .page-heading > /* Buttons & Controls */
-.button {
+  .page-heading > .button {
     font-size: 12px;
     padding: 11px 13px;
   }
 
-  /* Stats Grid */
-.stats-grid {
+  .stats-grid {
     gap: 10px;
   }
 
@@ -2590,8 +2604,7 @@ fieldset {
     margin-bottom: 23px;
   }
 
-  .page-heading > /* Buttons & Controls */
-.button {
+  .page-heading > .button {
     margin-top: 18px;
     width: 100%;
     font-size: 14px;
@@ -2602,8 +2615,7 @@ fieldset {
     max-width: 310px;
   }
 
-  /* Stats Grid */
-.stats-grid {
+  .stats-grid {
     gap: 8px;
     margin-bottom: 23px;
   }
@@ -2877,8 +2889,7 @@ fieldset {
     flex-wrap: wrap;
   }
 
-  .dialog-actions /* Buttons & Controls */
-.button {
+  .dialog-actions .button {
     flex: 1 1 130px;
     min-height: 44px;
     white-space: normal;
@@ -2923,8 +2934,7 @@ fieldset {
     width: 100%;
   }
 
-  .vehicle-admin-actions /* Buttons & Controls */
-.button {
+  .vehicle-admin-actions .button {
     width: 100%;
     white-space: normal;
     min-height: 44px;
