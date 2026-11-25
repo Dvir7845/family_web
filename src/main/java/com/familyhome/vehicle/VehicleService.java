@@ -36,19 +36,17 @@ public class VehicleService {
         this.authService = authService;
     }
 
-    private AppUser driver() {
-        return authService.requireCurrentUser();
-    }
+
 
     @Transactional(readOnly = true)
     @PreAuthorize("@auth.isDriver(authentication)")
-    public List<Vehicle> list() {
-        return vehicles.findAll();
+    public List<VehicleResponse> list() {
+        return vehicles.findAll().stream().map(VehicleResponse::from).toList();
     }
 
     @PreAuthorize("hasRole('ADMIN') && @auth.isDriver(authentication)")
-    public Vehicle create(String name) {
-        return vehicles.save(new Vehicle(name.trim()));
+    public VehicleResponse create(String name) {
+        return VehicleResponse.from(vehicles.save(new Vehicle(name.trim())));
     }
 
     @PreAuthorize("hasRole('ADMIN') && @auth.isDriver(authentication)")
@@ -73,7 +71,7 @@ public class VehicleService {
 
     @PreAuthorize("@auth.isDriver(authentication)")
     public BookingResponse book(Long vehicleId, LocalDate date, VehicleBooking.Slot slot) {
-        AppUser user = driver();
+        AppUser user = authService.requireCurrentUser();
         if (date.isBefore(LocalDate.now(clock.withZone(ZoneId.of("Asia/Jerusalem")))))
             throw new BusinessRuleException("Cannot book past dates");
         Vehicle vehicle =
@@ -89,7 +87,7 @@ public class VehicleService {
 
     @PreAuthorize("@auth.isDriver(authentication)")
     public void cancel(Long id) {
-        AppUser user = driver();
+        AppUser user = authService.requireCurrentUser();
         VehicleBooking booking =
                 bookings.findById(id)
                         .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));

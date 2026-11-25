@@ -38,13 +38,13 @@ public class VehicleController {
             @NotNull VehicleBooking.Slot slot) {}
 
     @GetMapping
-    public List<Vehicle> list() {
+    public List<VehicleResponse> list() {
         return service.list();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Vehicle create(@Valid @RequestBody VehicleRequest request) {
+    public VehicleResponse create(@Valid @RequestBody VehicleRequest request) {
         return service.create(request.name());
     }
 
