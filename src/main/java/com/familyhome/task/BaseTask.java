@@ -1,7 +1,6 @@
 package com.familyhome.task;
 
 import com.familyhome.member.AppUser;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.Entity;
@@ -32,7 +31,6 @@ public abstract class BaseTask {
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
-    @JsonIgnore
     private AppUser owner;
 
     @Column(nullable = false)
@@ -87,24 +85,18 @@ public abstract class BaseTask {
         return completed;
     }
 
-    public void setCompleted(boolean completed) {
-        this.completed = completed;
-    }
-
     public Instant getCompletedAt() {
         return completedAt;
-    }
-
-    public void setCompletedAt(Instant completedAt) {
-        this.completedAt = completedAt;
     }
 
     public String getCompletedByUsername() {
         return completedByUsername;
     }
 
-    public void setCompletedByUsername(String completedByUsername) {
-        this.completedByUsername = completedByUsername;
+    protected void resetCompletion() {
+        this.completed = false;
+        this.completedAt = null;
+        this.completedByUsername = null;
     }
 
     public void updateDetails(String name, String description) {

@@ -26,10 +26,6 @@ public class OneTimeTask extends BaseTask {
         return taskDate;
     }
 
-    public void setTaskDate(LocalDate taskDate) {
-        this.taskDate = taskDate;
-    }
-
     @Override
     public void updateDetails(String name, String description, LocalDate taskDate, DayOfWeek day) {
         if (taskDate == null || day != null) {

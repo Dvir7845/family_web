@@ -38,9 +38,7 @@ public class RecurringTask extends BaseTask {
 
     @Override
     public void resetWeeklyStatus() {
-        super.setCompleted(false);
-        super.setCompletedAt(null);
-        super.setCompletedByUsername(null);
+        resetCompletion();
     }
 
     @Override
