@@ -13,7 +13,8 @@ class TaskStatisticsTest {
     void weekStartsSundayInIsraelAndIncludesZeroCounts() {
         TaskRepository tasks = mock(TaskRepository.class);
         AppUserRepository users = mock(AppUserRepository.class);
-        Clock clock = Clock.fixed(Instant.parse("2026-11-07T22:30:00Z"), ZoneOffset.UTC);
+        Clock clock =
+                Clock.fixed(Instant.parse("2026-11-07T22:30:00Z"), ZoneId.of("Asia/Jerusalem"));
         AppUser a = mock(AppUser.class), b = mock(AppUser.class);
         when(a.getId()).thenReturn(1L);
         when(a.getUsername()).thenReturn("alice");

@@ -32,10 +32,9 @@ public class TaskStatisticsService {
 
     @Transactional(readOnly = true)
     public WeeklyStatistics weekly() {
-        ZoneId zone = ZoneId.of("Asia/Jerusalem");
+        ZoneId zone = clock.getZone();
         LocalDate start =
-                LocalDate.now(clock.withZone(zone))
-                        .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+                LocalDate.now(clock).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
         Map<String, Long> counts = new HashMap<>();
         tasks
                 .findByCompletedAtGreaterThanEqualAndCompletedAtLessThan(

@@ -23,7 +23,9 @@ public class TaskMaintenanceService {
     }
 
     @Transactional
-    @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Jerusalem") // Every day at midnight
+    @Scheduled(
+            cron = "0 0 0 * * ?",
+            zone = "${app.time-zone:Asia/Jerusalem}") // Every day at midnight
     public void deleteAllCompletedOneTimeTasks() {
         LocalDate today = LocalDate.now(clock);
         for (BaseTask task : taskRepository.findAll()) {

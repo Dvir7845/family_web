@@ -10,7 +10,6 @@ import com.familyhome.security.AuthService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.List;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,8 +34,6 @@ public class VehicleService {
         this.clock = clock;
         this.authService = authService;
     }
-
-
 
     @Transactional(readOnly = true)
     @PreAuthorize("@auth.isDriver(authentication)")
@@ -72,7 +69,7 @@ public class VehicleService {
     @PreAuthorize("@auth.isDriver(authentication)")
     public BookingResponse book(Long vehicleId, LocalDate date, VehicleBooking.Slot slot) {
         AppUser user = authService.requireCurrentUser();
-        if (date.isBefore(LocalDate.now(clock.withZone(ZoneId.of("Asia/Jerusalem")))))
+        if (date.isBefore(LocalDate.now(clock)))
             throw new BusinessRuleException("Cannot book past dates");
         Vehicle vehicle =
                 vehicles.findById(vehicleId)
