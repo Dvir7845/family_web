@@ -1,8 +1,10 @@
 package com.familyhome.exception;
 
-public class UnauthorizedOperationException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class UnauthorizedOperationException extends DomainException {
 
     public UnauthorizedOperationException(String message) {
-        super(message);
+        super(HttpStatus.UNAUTHORIZED, message);
     }
 }

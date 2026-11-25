@@ -6,15 +6,6 @@ public record AssigneeOption(
         this(id, username, driver, taskManager, Role.MEMBER);
     }
 
-    public AssigneeOption(
-            Long id, String username, boolean driver, boolean taskManager, Role role) {
-        this.id = id;
-        this.username = username;
-        this.driver = driver;
-        this.taskManager = taskManager;
-        this.role = role;
-    }
-
     public AssigneeOption(Long id, String username) {
         this(id, username, false, false, Role.MEMBER);
     }

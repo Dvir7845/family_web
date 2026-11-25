@@ -1,8 +1,10 @@
 package com.familyhome.exception;
 
-public class ForbiddenOperationException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class ForbiddenOperationException extends DomainException {
 
     public ForbiddenOperationException(String message) {
-        super(message);
+        super(HttpStatus.FORBIDDEN, message);
     }
 }

@@ -33,15 +33,15 @@ public class Event {
             name = "event_invitees",
             joinColumns = @JoinColumn(name = "event_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<AppUser> invitedUser = new LinkedHashSet<>();
+    private Set<AppUser> invitedUsers = new LinkedHashSet<>();
 
     protected Event() {}
 
-    public Event(String description, LocalDate eventDate, Set<AppUser> invitedUser) {
+    public Event(String description, LocalDate eventDate, Set<AppUser> invitedUsers) {
         this.description = description;
         this.eventDate = eventDate;
-        this.invitedUser =
-                invitedUser == null ? new LinkedHashSet<>() : new LinkedHashSet<>(invitedUser);
+        this.invitedUsers =
+                invitedUsers == null ? new LinkedHashSet<>() : new LinkedHashSet<>(invitedUsers);
     }
 
     public Long getId() {
@@ -56,22 +56,21 @@ public class Event {
         return eventDate;
     }
 
-    public Set<AppUser> getInvitedUser() {
-        return invitedUser;
+    public Set<AppUser> getInvitedUsers() {
+        return invitedUsers;
     }
 
     public void addInvitedUser(AppUser user) {
-        this.invitedUser.add(user);
+        this.invitedUsers.add(user);
     }
 
     public void removeInvitedUser(AppUser user) {
-        this.invitedUser.remove(user);
+        this.invitedUsers.remove(user);
     }
 
-    public void updateDetails(
-            String description, LocalDate eventDate, Set<AppUser> invitedUserIds) {
+    public void updateDetails(String description, LocalDate eventDate, Set<AppUser> invitedUsers) {
         this.description = description;
         this.eventDate = eventDate;
-        this.invitedUser = invitedUserIds;
+        this.invitedUsers = invitedUsers;
     }
 }

@@ -44,7 +44,6 @@ public class EventService {
 
     @Transactional
     public EventResponse updateEvent(long id, EventRequest request) {
-        resolveInvitedUsers(request.invitedUserIds());
         Event event =
                 eventRepository
                         .findById(id)
@@ -73,10 +72,14 @@ public class EventService {
                         .findById(eventId)
                         .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        if (userId == null || !userRepository.existsById(userId)) {
+        if (userId == null) {
             throw new BusinessRuleException("Invited user does not exist");
         }
-        AppUser user = userRepository.findById(userId).get();
+        AppUser user =
+                userRepository
+                        .findById(userId)
+                        .orElseThrow(
+                                () -> new BusinessRuleException("Invited user does not exist"));
         event.addInvitedUser(user);
         eventRepository.save(event);
     }

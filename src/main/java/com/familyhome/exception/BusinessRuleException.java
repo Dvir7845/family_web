@@ -1,8 +1,10 @@
 package com.familyhome.exception;
 
-public class BusinessRuleException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+public class BusinessRuleException extends DomainException {
 
     public BusinessRuleException(String message) {
-        super(message);
+        super(HttpStatus.BAD_REQUEST, message);
     }
 }

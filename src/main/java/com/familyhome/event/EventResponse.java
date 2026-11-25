@@ -11,6 +11,6 @@ public record EventResponse(
                 event.getId(),
                 event.getDescription(),
                 event.getEventDate(),
-                event.getInvitedUser().stream().map(AppUser::getId).toList());
+                event.getInvitedUsers().stream().map(AppUser::getId).toList());
     }
 }
