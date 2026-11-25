@@ -1,6 +1,7 @@
 package com.familyhome.vehicle;
 
 import com.familyhome.exception.BusinessRuleException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/vehicles")
+@Tag(name = "Vehicles", description = "Household vehicles and conflict-safe slot bookings")
 public class VehicleController {
     private final VehicleService service;
 

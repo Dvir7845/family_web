@@ -31,7 +31,14 @@ public class WebSecurityConfig {
             throws Exception {
         http.authorizeHttpRequests(authorize ->
                         authorize
-                                .requestMatchers("/login.html", "/assets/**", "/csrf", "/error")
+                                .requestMatchers(
+                                        "/login.html",
+                                        "/assets/**",
+                                        "/csrf",
+                                        "/error",
+                                        "/swagger-ui.html",
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated())

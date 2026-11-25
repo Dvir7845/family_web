@@ -1,6 +1,7 @@
 package com.familyhome.task;
 
 import com.familyhome.member.AssigneeOption;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Tasks", description = "One-time and recurring weekly tasks and statistics")
 public class TaskController {
 
     private final TaskService taskService;

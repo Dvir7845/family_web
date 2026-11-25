@@ -1,5 +1,7 @@
 # Family Home
 
+[![CI](https://github.com/Dvir7845/family_web/actions/workflows/ci.yml/badge.svg)](https://github.com/Dvir7845/family_web/actions/workflows/ci.yml)
+
 **Family Home** is a shared household management application built with **Java 25, Spring Boot 4.1.2, Spring Security, Spring Data JPA, Flyway, and PostgreSQL**, paired with a lightweight, Hebrew right-to-left (RTL) ES-module browser UI served directly by Spring Boot. It brings together household tasks (with a weekly completion leaderboard), shared shopping lists, family events, member/role management, and conflict-safe vehicle slot bookings.
 
 > **Note:** Built as a backend-focused portfolio project emphasizing layered architecture, role/flag-based authorization, Flyway schema management, concurrency safety, and automated testing.
@@ -166,7 +168,7 @@ erDiagram
 ## API & Permissions
 
 - Full permissions matrix, endpoint table, and JSON request examples: **[docs/api-and-permissions.md](docs/api-and-permissions.md)**
-- Interactive OpenAPI / Swagger UI is planned in the Roadmap below.
+- Interactive **OpenAPI / Swagger UI** (served by `springdoc-openapi`): **`http://localhost:8080/swagger-ui.html`** (raw spec at `/v3/api-docs`).
 
 ---
 
@@ -185,10 +187,10 @@ node .\src\test\js\vehicle-calendar.test.cjs
 node .\src\test\js\frontend.test.cjs
 ```
 
-Java code formatting is configured with Spotless (google-java-format AOSP):
+Java code formatting (Spotless `google-java-format` AOSP) and **JaCoCo** test coverage reports are bound to `verify` (HTML report generated at `target/site/jacoco/index.html`, and uploaded as a GitHub Actions CI artifact):
 
 ```powershell
-.\mvnw.cmd spotless:check
+.\mvnw.cmd verify
 ```
 
 ---

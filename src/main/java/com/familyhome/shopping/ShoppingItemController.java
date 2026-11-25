@@ -1,5 +1,6 @@
 package com.familyhome.shopping;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/shopping-items")
+@Tag(name = "Shopping", description = "Shared household shopping list")
 public class ShoppingItemController {
 
     private final ShoppingItemService service;
