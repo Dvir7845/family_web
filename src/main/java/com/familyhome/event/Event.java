@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "events")
@@ -22,12 +23,13 @@ public class Event {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String description;
 
     @Column(name = "event_date", nullable = false)
     private LocalDate eventDate;
 
+    @BatchSize(size = 50)
     @ManyToMany
     @JoinTable(
             name = "event_invitees",
