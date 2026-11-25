@@ -205,7 +205,7 @@
       </div>
       <input name="id" type="hidden">
       <label for="taskName">מה צריך לעשות?</label>
-      <input id="taskName" name="name" maxlength="255" placeholder="למשל, להשקות את העציצים" required>
+      <input id="taskName" name="name" maxlength="100" placeholder="למשל, להשקות את העציצים" required>
       <label for="taskType">סוג המשימה</label>
       <select id="taskType" name="type" aria-describedby="taskTypeHelp" required>
         <option value="ONETIME">חד־פעמית — לתאריך מסוים</option>
@@ -251,7 +251,7 @@
         </div>
       </div>
       <label for="taskDescription">פרטים נוספים <span class="optional">לא חובה</span></label>
-      <textarea id="taskDescription" name="description" rows="3" maxlength="255" placeholder="כל מה שכדאי לדעת על המשימה"></textarea>
+      <textarea id="taskDescription" name="description" rows="3" maxlength="500" placeholder="כל מה שכדאי לדעת על המשימה"></textarea>
       <p class="form-error notice" role="alert" hidden></p>
       <div class="dialog-actions">
         <button class="button button-primary" type="submit">שמירת המשימה</button>
@@ -269,7 +269,7 @@
             <use href="/assets/icons.svg#close"></use>
           </svg></button>
       </div><input name="id" type="hidden"><label for="productName">שם המוצר</label><input id="productName"
-        name="productName" maxlength="255" placeholder="למשל, חלב או עגבניות" required><label for="productQuantity">כמות
+        name="productName" maxlength="100" placeholder="למשל, חלב או עגבניות" required><label for="productQuantity">כמות
         יחידות</label><input id="productQuantity" class="quantity-input" name="quantity" type="number" min="1"
         max="2147483647" step="1" value="1" required>
       <p class="field-help">תאריך העדכון נקבע אוטומטית בשמירה. מוצר שלא עודכן במשך שבוע יוסר בניקוי היומי.</p>
@@ -298,7 +298,7 @@
       <input name="id" type="hidden">
 
       <label for="eventDescription">מה האירוע?</label>
-      <input id="eventDescription" name="description" maxlength="255" placeholder="למשל, ארוחת ערב משפחתית" required>
+      <input id="eventDescription" name="description" maxlength="500" placeholder="למשל, ארוחת ערב משפחתית" required>
 
       <label for="eventDate">תאריך האירוע</label>
       <input id="eventDate" name="eventDate" type="date" required>

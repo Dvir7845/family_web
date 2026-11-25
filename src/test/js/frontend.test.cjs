@@ -81,6 +81,18 @@ async function run() {
     }),
     "למשימה חד־פעמית יש לבחור תאריך בלבד."
   );
+  assert.equal(
+    apiMod.errorMessage(400, {
+      productName: "Product name must be at most 100 characters"
+    }),
+    "שם המוצר יכול להכיל עד 100 תווים."
+  );
+  assert.equal(
+    apiMod.errorMessage(400, {
+      description: "Description must be at most 500 characters"
+    }),
+    "תיאור האירוע יכול להכיל עד 500 תווים."
+  );
 
   for (const status of [400, 401, 403, 404, 409, 500]) {
     assert.ok(apiMod.errorMessage(status, null).length > 0);

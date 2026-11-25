@@ -13,11 +13,13 @@ export const ERROR_TRANSLATIONS = {
   "Day is required": "צריך לבחור יום בשבוע.",
   "Assignee is required": "צריך לבחור אחראי למשימה.",
   "Product name is required": "צריך למלא שם מוצר.",
+  "Product name must be at most 100 characters": "שם המוצר יכול להכיל עד 100 תווים.",
   "Quantity must be greater than zero": "הכמות חייבת להיות מספר שלם גדול מאפס.",
   "Username already exists": "שם המשתמש הזה כבר קיים. בחרו שם אחר.",
   "Selected assignee does not exist": "האחראי שנבחר אינו קיים. רעננו את רשימת בני המשפחה.",
   "Password exceeds the supported byte length": "הסיסמה ארוכה מדי. נסו סיסמה קצרה יותר.",
   "Description is required": "צריך למלא תיאור לאירוע.",
+  "Description must be at most 500 characters": "תיאור האירוע יכול להכיל עד 500 תווים.",
   "Event date is required": "צריך לבחור תאריך לאירוע.",
   "Invalid month": "החודש שנבחר אינו תקין.",
   "Username must contain 3–30 letters, digits or underscores": "שם המשתמש חייב להכיל 3–30 אותיות באנגלית, ספרות או קו תחתון."
