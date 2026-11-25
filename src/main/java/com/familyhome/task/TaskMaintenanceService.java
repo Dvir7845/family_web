@@ -18,21 +18,12 @@ public class TaskMaintenanceService {
     }
 
     @Transactional
-    public void deleteAllTasks() {
-        taskRepository.deleteAll();
-    }
-
-    @Transactional
     @Scheduled(
             cron = "0 0 0 * * ?",
             zone = "${app.time-zone:Asia/Jerusalem}") // Every day at midnight
     public void deleteAllCompletedOneTimeTasks() {
         LocalDate today = LocalDate.now(clock);
-        for (BaseTask task : taskRepository.findAll()) {
-            if (task.shouldDeleteOnDailyCleanup(today)) {
-                taskRepository.delete(task);
-            }
-        }
+        taskRepository.deleteCompletedOrExpiredOneTimeTasks(today);
     }
 
     @Transactional
@@ -40,8 +31,6 @@ public class TaskMaintenanceService {
             cron = "0 0 0 * * SUN",
             zone = "${app.time-zone:Asia/Jerusalem}") // Every Sunday at midnight
     public void resetWeeklyTaskCompletionStatus() {
-        for (BaseTask task : taskRepository.findAll()) {
-            task.resetWeeklyStatus();
-        }
+        taskRepository.resetAllRecurringTasks();
     }
 }

@@ -63,7 +63,7 @@ public class AccountService {
         if (user.getUsername().equals(currentUsername))
             throw new BusinessRuleException("Cannot delete your own account");
         tasks.findAllByOwnerId(id).forEach(task -> task.assignOwner(null));
-        events.findAll().forEach(event -> event.removeInvitedUser(user));
+        events.deleteInviteeByUserId(id);
         bookings.deleteByUserId(id);
         users.delete(user);
         expireAfterCommit(user.getUsername());

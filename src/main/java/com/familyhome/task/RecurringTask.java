@@ -37,11 +37,6 @@ public class RecurringTask extends BaseTask {
     }
 
     @Override
-    public void resetWeeklyStatus() {
-        resetCompletion();
-    }
-
-    @Override
     public TaskType getType() {
         return TaskType.WEEKLY;
     }

@@ -36,11 +36,6 @@ public class OneTimeTask extends BaseTask {
     }
 
     @Override
-    public boolean shouldDeleteOnDailyCleanup(LocalDate today) {
-        return isCompleted() || (taskDate != null && taskDate.isBefore(today));
-    }
-
-    @Override
     public TaskType getType() {
         return TaskType.ONETIME;
     }

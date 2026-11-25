@@ -93,12 +93,6 @@ public abstract class BaseTask {
         return completedByUsername;
     }
 
-    protected void resetCompletion() {
-        this.completed = false;
-        this.completedAt = null;
-        this.completedByUsername = null;
-    }
-
     public void updateDetails(String name, String description) {
         this.name = name;
         this.description = description;
@@ -117,10 +111,4 @@ public abstract class BaseTask {
         this.completedAt = completedAt;
         this.completedByUsername = completedByUsername;
     }
-
-    public boolean shouldDeleteOnDailyCleanup(LocalDate today) {
-        return false;
-    }
-
-    public void resetWeeklyStatus() {}
 }
