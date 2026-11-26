@@ -117,7 +117,7 @@ Create a weekly task (`POST /tasks`):
 {
   "name": "Shopping",
   "type": "WEEKLY",
-  "day": "SUNDAY",
+  "days": ["SUNDAY", "WEDNESDAY"],
   "description": "Buy milk and bread",
   "assigneeId": 2
 }

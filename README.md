@@ -176,7 +176,7 @@ erDiagram
 - **Post-Commit Session Expiration:** When an admin promotes or deletes a user, or a user changes their password, active sessions are expired *after* the database transaction commits so concurrent requests cannot observe stale permissions.
 - **Single-Table Inheritance for Tasks:** `BaseTask` uses `SINGLE_TABLE` inheritance (`task_type`: `ONETIME` / `WEEKLY`) in `tasks`, avoiding joins on the main task board while keeping type-specific fields cleanly modeled in Java.
 - **Database Unique Constraint for Booking Races:** Vehicle double-booking is prevented by a database-level unique constraint (`unique_vehicle_slot` on `(vehicle_id, booking_date, slot)`) rather than application-level locking alone; conflicting concurrent requests are mapped to `409 Conflict`.
-- **Flyway + `ddl-auto=validate`:** Schema changes are versioned in `src/main/resources/db/migration/` (`V1__init.sql`) with Hibernate set to `validate`, ensuring the JPA model and SQL schema cannot silently drift. *(Note: if upgrading a legacy database created earlier with `ddl-auto=update`, drop and recreate the schema or baseline Flyway manually until a legacy migration is added.)*
+- **Flyway + `ddl-auto=validate`:** Schema changes are versioned across `src/main/resources/db/migration/` (`V1__init.sql`, `V3__harden_schema_and_indexes.sql`) and PostgreSQL-only `src/main/resources/db/postgresql/` (`V2__migrate_legacy_event_invitees.sql` with `baseline-on-migrate=true` for legacy schemas), with Hibernate set to `validate` so the JPA model and SQL schema cannot silently drift.
 - **Paged API Responses & `ProblemDetail`:** List endpoints (`/tasks`, `/events`, `/shopping-items`) return Spring Data `Page<...>` JSON (`@PageableDefault(size = 50)`), and domain/validation errors return standardized `ProblemDetail` responses via `GlobalExceptionHandler`.
 
 ---
@@ -214,11 +214,13 @@ Java code formatting (Spotless `google-java-format` AOSP) and **JaCoCo** test co
 ## Project Structure
 
 ```text
+├── .github/workflows/ci.yml     # GitHub Actions CI (verify + Node JS tests)
 ├── docs/
 │   └── api-and-permissions.md   # Permissions matrix, endpoint list, request examples
 ├── src/
 │   ├── main/
 │   │   ├── java/com/familyhome/
+│   │   │   ├── config/          # TimeConfig, SchedulingConfig, OpenApiConfig, DemoDataSeeder
 │   │   │   ├── event/           # Events, many-to-many invitees, daily cleanup
 │   │   │   ├── exception/       # Domain exceptions & GlobalExceptionHandler (ProblemDetail)
 │   │   │   ├── member/          # Accounts, passwords, promotion, deletion, flags
@@ -228,23 +230,16 @@ Java code formatting (Spotless `google-java-format` AOSP) and **JaCoCo** test co
 │   │   │   └── vehicle/         # Vehicles, booking slots & driver checks
 │   │   └── resources/
 │   │       ├── application.properties
+│   │       ├── application-demo.properties
 │   │       ├── db/              # Flyway SQL migrations (migration/ + postgresql/)
 │   │       └── static/          # Hebrew RTL pages, CSS, and ES modules under assets/js/
 │   └── test/
-│       ├── java/                # Unit, JPA repository, security, and MockMvc API tests
+│       ├── java/                # Unit, JPA repository, security, MockMvc, and Testcontainers tests
 │       ├── js/                  # Node.js tests for ES modules & vehicle calendar
 │       └── resources/           # application-test.properties
 ├── AGENTS.md                    # Engineering conventions for coding agents
 ├── docker-compose.yml           # PostgreSQL 17 + app container setup
 ├── Dockerfile                   # Multi-stage JDK 25 build -> JRE 25 runtime
-├── pom.xml                      # Spring Boot 4.1.2, Flyway, Spotless
+├── pom.xml                      # Spring Boot 4.1.2, Flyway, OpenAPI, Spotless, JaCoCo, Testcontainers
 └── start-server.ps1             # Local Windows runner prompting for DB_PASSWORD
 ```
-
----
-
-## Roadmap
-
-- **Architecture & Code Quality:** Enforce Spotless (`google-java-format`) in Maven `verify`, finish DTO mapping in `VehicleController`, centralize timezone and conditional scheduling config, replace load-all maintenance loops with bulk JPQL/SQL operations, and expand `GlobalExceptionHandler`.
-- **Data Model & Performance:** Add Flyway `V3` column nullability/length constraints aligned with validation, add indexes for foreign keys and date/completion queries, and prevent N+1 queries on paginated event listings with batch fetching.
-- **Developer Experience & Showcase:** GitHub Actions CI (`mvnw verify` + Node JS tests), OpenAPI / Swagger UI (`springdoc-openapi`), JaCoCo test coverage reporting, PostgreSQL Testcontainers integration test, and live demo deployment.
