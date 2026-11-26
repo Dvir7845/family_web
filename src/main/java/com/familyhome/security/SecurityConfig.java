@@ -3,11 +3,14 @@ package com.familyhome.security;
 import com.familyhome.member.AppUser;
 import com.familyhome.member.AppUserRepository;
 import com.familyhome.member.Role;
+import java.time.Clock;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -25,8 +28,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService(AppUserRepository userRepository) {
+    public LoginRateLimiter loginRateLimiter(ObjectProvider<Clock> clockProvider) {
+        return new LoginRateLimiter(clockProvider.getIfAvailable(Clock::systemUTC));
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService(
+            AppUserRepository userRepository, LoginRateLimiter loginRateLimiter) {
         return username -> {
+            if (loginRateLimiter.isBlocked(username)) {
+                throw new LockedException(
+                        "Too many failed login attempts. Try again in a few minutes.");
+            }
             AppUser appUser =
                     userRepository
                             .findByUsername(username)

@@ -28,7 +28,7 @@ New accounts always receive the `MEMBER` role. Both `driver` and `taskManager` d
 
 ## API Overview
 
-All business endpoints require authentication. The login page (`/login.html`), static assets (`/assets/**`), `/csrf`, and `/error` are public. Both browser form login and HTTP Basic are supported. State-changing requests require a valid CSRF token.
+All business endpoints require authentication. The login page (`/login.html`), static assets (`/assets/**`), `/csrf`, `/error`, `/actuator/health`, `/actuator/info`, and the OpenAPI/Swagger UI endpoints (`/swagger-ui/**`, `/v3/api-docs/**`) are public. Both browser form login (used by the web UI) and HTTP Basic (retained for Swagger UI, CLI/API clients, and automated tests) are supported, alongside per-username login rate limiting (5 failed attempts trigger a 5-minute cooldown). State-changing requests require a valid CSRF token.
 
 List endpoints (`/tasks`, `/events`, `/shopping-items`) return Spring Data `Page<...>` JSON responses with `@PageableDefault(size = 50)`. Errors are returned as RFC `ProblemDetail` payloads by `GlobalExceptionHandler`.
 

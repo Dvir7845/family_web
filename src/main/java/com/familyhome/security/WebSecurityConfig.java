@@ -51,6 +51,8 @@ public class WebSecurityConfig {
                                 .defaultSuccessUrl("/", true)
                                 .failureUrl("/login.html?error")
                                 .permitAll())
+                // Keep HTTP Basic enabled alongside form login for Swagger UI, API tools, and
+                // tests.
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session ->
                         session.maximumSessions(-1)
