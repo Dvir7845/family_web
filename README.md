@@ -47,6 +47,15 @@ Prerequisites: **JDK 25**, **PostgreSQL**, and **PowerShell** (Node.js is option
 
 4. Open `http://localhost:8080/` and sign in.
 
+### Running in Demo Mode (`demo` profile)
+
+To run or deploy a public showcase instance without exposing an `ADMIN` password:
+
+- Activate the `demo` Spring profile (`SPRING_PROFILES_ACTIVE=demo`), while keeping `APP_LOGIN_PASSWORD` set to a private strong password for the bootstrap `admin`.
+- On startup, `DemoDataSeeder` seeds realistic sample tasks, shopping items, events, vehicles, and a non-destructive demo user:
+  - **Username:** `demo` (role `MEMBER`, with `driver` + `taskManager` enabled; password changes and deletion are blocked for the `demo` account).
+  - **Password:** `DemoPass123!` (configurable via `APP_DEMO_PASSWORD`).
+
 ### Building an Executable JAR
 
 ```powershell
