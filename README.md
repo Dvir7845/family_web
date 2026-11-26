@@ -6,6 +6,13 @@
 
 > **Note:** Built as a backend-focused portfolio project emphasizing layered architecture, role/flag-based authorization, Flyway schema management, concurrency safety, and automated testing.
 
+### Live Demo
+
+- **App:** https://family-home-demo.onrender.com
+- **Swagger UI (OpenAPI):** https://family-home-demo.onrender.com/swagger-ui.html
+- **Demo Credentials:** Username `demo` / Password `DemoPass123!` (`MEMBER` role with `driver` + `taskManager` enabled; password changes and deletion of the shared demo account are disabled).
+- *(Hosted on Render Free Tier + Neon PostgreSQL — if asleep, the first request may take ~30–60 seconds to wake up.)*
+
 ### Screenshots
 
 | Main Dashboard (Shopping List) | Login Page |
